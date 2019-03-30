@@ -1,6 +1,10 @@
 module.exports = topoSort;
 
-// Permutes the dependencies into topological order
+/**
+ * Permutes the dependencies into topological order
+ * @param {DepsInfo[]} deps
+ * @return {DepsInfo[]}
+ */
 function topoSort(deps) {
   // Build reversed adjacency list
   var adj = {};

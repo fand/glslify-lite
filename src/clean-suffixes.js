@@ -2,6 +2,11 @@ module.exports = clean;
 
 var suffix = /^([^_]+)_(\d{4,})$/;
 
+/**
+ * Remove redundant suffixes from identifier tokens
+ * @param {Token[]} tokens
+ * @return {Token[]}
+ */
 function clean(tokens) {
   var blacklist = {};
   var index = {};

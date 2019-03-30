@@ -24,9 +24,11 @@ module.exports = function(arg, opts) {
     return iface().file(arg, opts);
   } else throw new Error("unhandled argument type: " + typeof arg);
 };
+
 module.exports.compile = function(src, opts) {
   return iface().compile(src, opts);
 };
+
 module.exports.file = function(file, opts) {
   return iface().file(file, opts);
 };
@@ -40,6 +42,11 @@ function iface() {
   var posts = [];
   return { tag: tag, compile: compile, file: file };
 
+  /**
+   * Bundle
+   * @param {string[] | string} strings
+   * @return {string}
+   */
   function tag(strings) {
     if (typeof strings === "string") strings = [strings];
     var exprs = [].slice.call(arguments, 1);
@@ -50,18 +57,38 @@ function iface() {
     parts.push(strings[i]);
     return compile(parts.join(""));
   }
+
+  /**
+   * Bundle the shader given as a string.
+   * @param  {string} src - The content of the input shader
+   * @param  {Object=} opts
+   * @return {string}
+   */
   function compile(src, opts) {
     if (!opts) opts = {};
     var depper = gdeps(opts);
     var deps = depper.inline(src, opts.basedir || basedir);
     return bundle(deps);
   }
+
+  /**
+   * Bundle the shader for given filename.
+   * @param  {string} filename - The filepath of the input shader
+   * @param  {Object=} opts
+   * @return {string}
+   */
   function file(filename, opts) {
     if (!opts) opts = {};
     var depper = gdeps(opts);
     var deps = depper.add(path.resolve(opts.basedir || basedir, filename));
     return bundle(deps);
   }
+
+  /**
+   * Create depper and install transformers.
+   * @param {Object=} opts
+   * @return {Depper}
+   */
   function gdeps(opts) {
     if (!opts) opts = {};
     var depper = glslifyDeps({ cwd: opts.basedir || basedir });
@@ -79,14 +106,23 @@ function iface() {
     });
     return depper;
   }
+
+  /**
+   * Bundle deps and apply post transformations.
+   * @parama {DepsInfo[]} deps
+   * @return {string}
+   */
   function bundle(deps) {
     var source = glslifyBundle(deps);
+
+    // Load post transforms dynamically and apply them to the source
     posts.forEach(function(tr) {
       var target = nodeResolve.sync(tr.name, { basedir: basedir });
       var transform = require(target);
       var src = transform(null, source, { post: true });
       if (src) source = src;
     });
+
     return source;
   }
 }

@@ -48,7 +48,7 @@ declare module "shallow-copy" {
     export = copy;
 }
 
-declare module "glslify-deps/sync" {
-    function deps(opts: { cwd: string }): Depper;
+declare module "glslify-deps" {
+    function deps(opts: DepperOptions): Depper;
     export = deps;
 }

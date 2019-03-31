@@ -2,11 +2,16 @@ import glslifyBundle from "./glslify-bundle";
 import * as path from "path";
 import * as nodeResolve from "resolve";
 import * as stackTrace from "stack-trace";
-import glslifyDeps = require("glslify-deps/sync");
+import p = require('pify');
+import glslifyDeps = require("glslify-deps");
 
-type Opts = any;
+type GlslifyOpts = {
+    basedir?: string;
+    transform?: [string, any][];
+    _flags?: any;
+};
 
-module.exports = function(arg: any, opts: Opts) {
+module.exports = function(arg: any, opts: GlslifyOpts): Promise<string> {
     if (Array.isArray(arg)) {
         // template string
         return iface().tag.apply(null, arguments as any);
@@ -27,11 +32,11 @@ module.exports = function(arg: any, opts: Opts) {
     } else throw new Error("unhandled argument type: " + typeof arg);
 };
 
-module.exports.compile = function(src: string, opts?: Opts) {
+module.exports.compile = function(src: string, opts?: GlslifyOpts): Promise<string> {
     return iface().compile(src, opts);
 };
 
-module.exports.file = function(file: string, opts?: Opts) {
+module.exports.file = function(file: string, opts?: GlslifyOpts): Promise<string> {
     return iface().file(file, opts);
 };
 
@@ -47,7 +52,7 @@ function iface() {
     /**
      * Bundle
      */
-    function tag(strings: string[] | string): string {
+    async function tag(strings: string[] | string): Promise<string> {
         if (typeof strings === "string") strings = [strings];
         var exprs = [].slice.call(arguments, 1);
         var parts = [];
@@ -62,10 +67,10 @@ function iface() {
      * Bundle the shader given as a string.
      * @param src - The content of the input shader
      */
-    function compile(src: string, opts?: Opts): string {
+    async function compile(src: string, opts?: GlslifyOpts): Promise<string> {
         if (!opts) opts = {};
         var depper = gdeps(opts);
-        var deps = depper.inline(src, opts.basedir || basedir);
+        var deps = await p(depper.inline.bind(depper))(src, opts.basedir || basedir);
         return bundle(deps);
     }
 
@@ -73,17 +78,17 @@ function iface() {
      * Bundle the shader for given filename.
      * @param filename - The filepath of the input shader
      */
-    function file(filename: string, opts?: Opts): string {
+    async function file(filename: string, opts?: GlslifyOpts): Promise<string> {
         if (!opts) opts = {};
         var depper = gdeps(opts);
-        var deps = depper.add(path.resolve(opts.basedir || basedir, filename));
+        var deps = await p(depper.add.bind(depper))(path.resolve(opts.basedir || basedir, filename));
         return bundle(deps);
     }
 
     /**
      * Create depper and install transformers.
      */
-    function gdeps(opts?: Opts): Depper {
+    function gdeps(opts?: GlslifyOpts): Depper {
         if (!opts) opts = {};
         var depper = glslifyDeps({ cwd: opts.basedir || basedir });
         var transforms = opts.transform || [];

@@ -11,7 +11,7 @@ type GlslifyOpts = {
     _flags?: any;
 };
 
-module.exports = function(arg: any, opts: GlslifyOpts): Promise<string> {
+export default function(arg: any, opts?: GlslifyOpts): Promise<string> {
     if (Array.isArray(arg)) {
         // template string
         return iface().tag.apply(null, arguments as any);
@@ -22,7 +22,7 @@ module.exports = function(arg: any, opts: GlslifyOpts): Promise<string> {
         opts._flags
     ) {
         // browserify transform
-        return require("./transform.js").apply(this, arguments);
+        return require("./transform.js").apply(global, arguments);
     } else if (typeof arg === "string" && /\n/.test(arg)) {
         // source string
         return iface().compile(arg, opts);
@@ -32,16 +32,17 @@ module.exports = function(arg: any, opts: GlslifyOpts): Promise<string> {
     } else throw new Error("unhandled argument type: " + typeof arg);
 };
 
-module.exports.compile = function(src: string, opts?: GlslifyOpts): Promise<string> {
+export function compile(src: string, opts?: GlslifyOpts): Promise<string> {
     return iface().compile(src, opts);
 };
 
-module.exports.file = function(file: string, opts?: GlslifyOpts): Promise<string> {
+export function file(file: string, opts?: GlslifyOpts): Promise<string> {
     return iface().file(file, opts);
 };
 
 function iface() {
     try {
+        // Get the filepath where module.exports.compile etc. was called
         var basedir = path.dirname(stackTrace.get()[2].getFileName());
     } catch (err) {
         basedir = process.cwd();

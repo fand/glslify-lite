@@ -1,7 +1,7 @@
-const test = require("ava");
-const glx = require("../");
+import test from 'ava';
+import glx from '../src/glslify';
 
-test("node string", async function(t) {
+test("node string", async t => {
     var output = await glx(
         [
             '  #pragma glslify: noise = require("glsl-noise/simplex/3d")',
@@ -15,7 +15,7 @@ test("node string", async function(t) {
     t.assert(/taylorInvSqrt/.test(output), "contains parts of the file");
 });
 
-test("node simulated tagged template string", async function(t) {
+test("node simulated tagged template string", async t => {
     var output = await glx(
         [
             "" +
@@ -26,7 +26,7 @@ test("node simulated tagged template string", async function(t) {
                 "    gl_FragColor = vec4(noise(vpos*",
             "),1);\n" + "  }\n"
         ],
-        "25.0"
+        "25.0" as any
     );
     t.assert(/taylorInvSqrt/.test(output), "contains parts of the file");
     t.assert(/vpos\*25\.0\),1/.test(output), "interpolated var");
@@ -34,7 +34,7 @@ test("node simulated tagged template string", async function(t) {
 
 test("node tagged template string", async function(t) {
     var output = await Function(
-        ["glx"],
+        "glx",
         "return glx`\n" +
             '  #pragma glslify: noise = require("glsl-noise/simplex/3d")\n' +
             "  precision mediump float;\n" +

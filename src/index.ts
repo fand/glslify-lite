@@ -1,5 +1,5 @@
-const glslify = require("./glslify");
+import glslify, { compile, file } from './glslify';
 
 module.exports = glslify;
-module.exports.compile = glslify.compile;
-module.exports.file = glslify.file;
+module.exports.compile = compile;
+module.exports.file = file;

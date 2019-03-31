@@ -1,4 +1,4 @@
-const glslify = require('./glslify');
+const glslify = require("./glslify");
 
 module.exports = glslify;
 module.exports.compile = glslify.compile;

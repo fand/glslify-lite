@@ -84,3 +84,5 @@ typings/
 
 # I don't wanna add package lock to git
 package-lock.json
+
+lib/**/*

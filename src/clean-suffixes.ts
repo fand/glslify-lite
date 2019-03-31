@@ -1,5 +1,3 @@
-import { Token } from "./types";
-
 var suffix = /^([^_]+)_(\d{4,})$/;
 
 /**

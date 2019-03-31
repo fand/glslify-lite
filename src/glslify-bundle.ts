@@ -13,7 +13,6 @@ import copy = require("shallow-copy");
 
 import clean from "./clean-suffixes";
 import topoSort from "./topo-sort";
-import { DepsInfo, Token, DepsHash } from "./types";
 
 export default function(deps: DepsInfo[]) {
     return inject(new Bundle(deps).src, {

@@ -1,5 +1,3 @@
-import { DepsInfo } from "./types";
-
 /**
  * Permutes the dependencies into topological order.
  */

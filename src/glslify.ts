@@ -3,7 +3,6 @@ import * as path from "path";
 import * as nodeResolve from "resolve";
 import * as stackTrace from "stack-trace";
 import glslifyDeps = require("glslify-deps/sync");
-import { DepsInfo, Depper, PostTransform } from "./types";
 
 type Opts = any;
 

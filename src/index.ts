@@ -1,5 +1,2 @@
-import glslify, { compile, file } from './glslify';
-
+import * as glslify from './glslify';
 module.exports = glslify;
-module.exports.compile = compile;
-module.exports.file = file;

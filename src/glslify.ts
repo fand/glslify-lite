@@ -11,33 +11,16 @@ type GlslifyOpts = {
     _flags?: any;
 };
 
-export default function(arg: any, opts?: GlslifyOpts): Promise<string> {
-    if (Array.isArray(arg)) {
-        // template string
-        return iface().tag.apply(null, arguments as any);
-    } else if (
-        typeof arg === "string" &&
-        !/\n/.test(arg) &&
-        opts &&
-        opts._flags
-    ) {
-        // browserify transform
-        return require("./transform.js").apply(global, arguments);
-    } else if (typeof arg === "string" && /\n/.test(arg)) {
-        // source string
-        return iface().compile(arg, opts);
-    } else if (typeof arg === "string") {
-        // source file
-        return iface().file(arg, opts);
-    } else throw new Error("unhandled argument type: " + typeof arg);
-};
-
 export function compile(src: string, opts?: GlslifyOpts): Promise<string> {
     return iface().compile(src, opts);
 };
 
 export function file(file: string, opts?: GlslifyOpts): Promise<string> {
     return iface().file(file, opts);
+};
+
+export function tag(strings: string[] | TemplateStringsArray, ...exprs: any[]): Promise<string> {
+    return iface().tag(strings, ...exprs);
 };
 
 function iface() {
@@ -53,9 +36,8 @@ function iface() {
     /**
      * Bundle
      */
-    async function tag(strings: string[] | string): Promise<string> {
+    async function tag(strings: string[] | string | TemplateStringsArray, ...exprs: any[]): Promise<string> {
         if (typeof strings === "string") strings = [strings];
-        var exprs = [].slice.call(arguments, 1);
         var parts = [];
         for (var i = 0; i < strings.length - 1; i++) {
             parts.push(strings[i], exprs[i] || "");

@@ -1,8 +1,8 @@
 import test from 'ava';
-import glx from '../src/glslify';
+import { file, compile, tag } from '../src/glslify';
 
 test("node string", async t => {
-    var output = await glx(
+    var output = await compile(
         [
             '  #pragma glslify: noise = require("glsl-noise/simplex/3d")',
             "  precision mediump float;",
@@ -16,15 +16,15 @@ test("node string", async t => {
 });
 
 test("node simulated tagged template string", async t => {
-    var output = await glx(
+    var output = await tag(
         [
-            "" +
-                '  #pragma glslify: noise = require("glsl-noise/simplex/3d")\n' +
-                "  precision mediump float;\n" +
-                "  varying vec3 vpos;\n" +
-                "  void main () {\n" +
-                "    gl_FragColor = vec4(noise(vpos*",
-            "),1);\n" + "  }\n"
+            `
+#pragma glslify: noise = require("glsl-noise/simplex/3d")
+precision mediump float;
+varying vec3 vpos;
+void main () {
+    gl_FragColor = vec4(noise(vpos*`, `),1);
+}`
         ],
         "25.0" as any
     );
@@ -33,17 +33,14 @@ test("node simulated tagged template string", async t => {
 });
 
 test("node tagged template string", async function(t) {
-    var output = await Function(
-        "glx",
-        "return glx`\n" +
-            '  #pragma glslify: noise = require("glsl-noise/simplex/3d")\n' +
-            "  precision mediump float;\n" +
-            "  varying vec3 vpos;\n" +
-            "  void main () {\n" +
-            '    gl_FragColor = vec4(noise(vpos*${"25.0"}),1);\n' +
-            "  }\n" +
-            "`"
-    )(glx);
+    var output = await tag`
+#pragma glslify: noise = require("glsl-noise/simplex/3d")
+precision mediump float;
+varying vec3 vpos;
+void main () {
+    gl_FragColor = vec4(noise(vpos*${"25.0"}),1);
+}
+    `;
     t.assert(/taylorInvSqrt/.test(output), "contains parts of the file");
     t.assert(/vpos\*25\.0\),1/.test(output), "interpolated var");
 });

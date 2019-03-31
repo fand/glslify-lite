@@ -1,9 +1,8 @@
-var glslifyBundle = require("./glslify-bundle");
-var glslifyDeps = require("glslify-deps/sync");
-var nodeResolve = require("resolve");
-var path = require("path");
-var stackTrace = require("stack-trace");
-
+import glslifyBundle from "./glslify-bundle";
+import * as path from "path";
+import * as nodeResolve from "resolve";
+import * as stackTrace from "stack-trace";
+import glslifyDeps = require("glslify-deps/sync");
 import { DepsInfo, Depper, PostTransform } from "./types";
 
 type Opts = any;

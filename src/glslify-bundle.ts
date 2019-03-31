@@ -15,7 +15,7 @@ import clean from "./clean-suffixes";
 import topoSort from "./topo-sort";
 import { DepsInfo, Token, DepsHash } from "./types";
 
-module.exports = function(deps: DepsInfo[]) {
+export default function(deps: DepsInfo[]) {
     return inject(new Bundle(deps).src, {
         GLSLIFY: 1
     });

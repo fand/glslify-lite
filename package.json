@@ -23,7 +23,10 @@
   "author": "fand <fand.gmork@gmail.com> (https://gmork.in/)",
   "license": "MIT",
   "devDependencies": {
+    "@types/murmurhash-js": "^1.0.3",
     "@types/node": "^11.12.2",
+    "@types/resolve": "0.0.8",
+    "@types/stack-trace": "0.0.29",
     "@typescript-eslint/eslint-plugin": "^1.5.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.1.0",

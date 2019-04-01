@@ -47,7 +47,16 @@ type PostTransform = {
 };
 
 type Token = {
-    type: "ident" | "whitespace" | "eof" | "preprocessor";
+    type: "block-comment" | "line-comment" | "preprocessor" | "operator"| "float" | "ident" | "builtin" | "eof" | "integer" |"whitespace" | "keyword";
     data: string;
+    position: number;
+    line: number;
+    column: number;
+
+    source?: string;
+    original?: {
+        line: number;
+        column: number;
+    }
 };
 

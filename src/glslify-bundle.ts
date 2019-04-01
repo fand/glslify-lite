@@ -35,12 +35,12 @@ class Bundle {
         this.depList = deps;
         this.depIndex = indexById(deps);
 
-        for (var i = 0; i < deps.length; i++) {
+        for (let i = 0; i < deps.length; i++) {
             this.preprocess(deps[i]);
         }
 
         let tokens: Token[] = [];
-        for (var i = 0; i < deps.length; i++) {
+        for (let i = 0; i < deps.length; i++) {
             if (deps[i].entry) {
                 tokens = tokens.concat(this.bundle(deps[i]));
             }
@@ -53,33 +53,33 @@ class Bundle {
     }
 
     preprocess(dep: DepsInfo) {
-        var tokens = tokenize(dep.source);
-        var imports = [];
-        var exports = null;
+        const tokens = tokenize(dep.source);
+        const imports = [];
+        let exports = null;
 
         depth(tokens);
         scope(tokens);
 
-        for (var i = 0; i < tokens.length; i++) {
-            var token = tokens[i];
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
             if (token.type !== "preprocessor") continue;
             if (!glslifyPreprocessor(token.data)) continue;
 
-            var exported = glslifyExport(token.data);
-            var imported = glslifyImport(token.data);
+            const exported = glslifyExport(token.data);
+            const imported = glslifyImport(token.data);
 
             if (exported) {
                 exports = exported[1];
                 tokens.splice(i--, 1);
             } else if (imported) {
-                var name = imported[1];
-                var maps = imported[2].split(/\s?,\s?/g);
-                var path = maps
+                const name = imported[1];
+                const maps = imported[2].split(/\s?,\s?/g);
+                const path = maps
                     .shift()!
                     .trim()
                     .replace(/^'|'$/g, "")
                     .replace(/^"|"$/g, "");
-                var target = this.depIndex[dep.deps[path]];
+                const target = this.depIndex[dep.deps[path]];
                 imports.push({
                     name: name,
                     path: path,
@@ -91,7 +91,7 @@ class Bundle {
             }
         }
 
-        var eof = tokens[tokens.length - 1];
+        const eof = tokens[tokens.length - 1];
         if (eof && eof.type === "eof") {
             tokens.pop();
         }
@@ -115,46 +115,46 @@ class Bundle {
      * @param entry - An array of dependency entry returned from deps
      */
     bundle(entry: DepsInfo): Token[] {
-        var resolved: { [name: string]: boolean } = {};
-        var result = resolve(entry, [])[1];
+        const resolved: { [name: string]: boolean } = {};
+        const result = resolve(entry, [])[1];
 
         return result;
 
         function resolve(dep: DepsInfo, bindings: string[][]): [string, Token[]] {
             // Compute suffix for module
             bindings.sort();
-            var ident = bindings.join(":") + ":" + dep.id;
-            var suffix = "_" + hash(ident);
+            const ident = bindings.join(":") + ":" + dep.id;
+            let suffix = "_" + hash(ident);
 
             if (dep.entry) {
                 suffix = "";
             }
 
             // Test if export is already resolved
-            var exportName = dep.parsed!.exports + suffix;
+            const exportName = dep.parsed!.exports + suffix;
             if (resolved[exportName]) {
                 return [exportName, []];
             }
 
             // Initialize map for variable renamings based on bindings
-            var rename: { [from: string]: string | Token[] } = {};
-            for (var i = 0; i < bindings.length; ++i) {
-                var binding = bindings[i];
+            const rename: { [from: string]: string | Token[] } = {};
+            for (let i = 0; i < bindings.length; ++i) {
+                const binding = bindings[i];
                 rename[binding[0]] = binding[1];
             }
 
             // Resolve all dependencies
-            var imports = dep.parsed!.imports;
-            var edits: [number, Token[]][] = [];
-            for (var i = 0; i < imports.length; ++i) {
-                var data = imports[i];
+            const imports = dep.parsed!.imports;
+            const edits: [number, Token[]][] = [];
+            for (let i = 0; i < imports.length; ++i) {
+                const data = imports[i];
 
-                var importMaps = data.maps;
-                var importName = data.name;
-                var importTarget = data.target;
+                const importMaps = data.maps;
+                const importName = data.name;
+                const importTarget = data.target;
 
-                var importBindings = Object.keys(importMaps).map(function(id) {
-                    var value = importMaps[id];
+                const importBindings = Object.keys(importMaps).map(function(id) {
+                    const value = importMaps[id];
 
                     // floats/ints should not be renamed
                     if (value.match(/^\d+(?:\.\d+?)?$/g)) {
@@ -163,7 +163,7 @@ class Bundle {
 
                     // properties (uVec.x, ray.origin, ray.origin.xy etc.) should
                     // have their host identifiers renamed
-                    var parent = value.match(/^([^.]+)\.(.+)$/);
+                    const parent = value.match(/^([^.]+)\.(.+)$/);
                     if (parent) {
                         return [
                             id,
@@ -176,15 +176,15 @@ class Bundle {
                     return [id, rename[value] || value + suffix];
                 });
 
-                var importTokens = resolve(importTarget, importBindings);
+                const importTokens = resolve(importTarget, importBindings);
                 rename[importName] = importTokens[0];
                 edits.push([data.index, importTokens[1]]);
             }
 
             // Rename tokens
-            var parsedTokens = dep.parsed!.tokens.map(copy);
-            var parsedDefs = defines(parsedTokens);
-            var tokens = descope(parsedTokens, function(local: any) {
+            const parsedTokens = dep.parsed!.tokens.map(copy);
+            const parsedDefs = defines(parsedTokens);
+            let tokens = descope(parsedTokens, function(local: any) {
                 if (parsedDefs[local]) return local;
                 if (rename[local]) return rename[local];
 
@@ -196,8 +196,8 @@ class Bundle {
                 return b[0] - a[0];
             });
 
-            for (var i = 0; i < edits.length; ++i) {
-                var edit = edits[i];
+            for (let i = 0; i < edits.length; ++i) {
+                const edit = edits[i];
                 tokens = tokens
                     .slice(0, edit[0])
                     .concat(edit[1])
@@ -238,7 +238,7 @@ function toMapping(maps?: string[]) {
     ) {
         const defns = defn.split(/\s?=\s?/g);
 
-        var expr = defns.pop();
+        const expr = defns.pop();
 
         defns.forEach(function(key) {
             mapping[key] = expr;

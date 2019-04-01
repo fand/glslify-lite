@@ -24,13 +24,16 @@ export function tag(strings: string[] | TemplateStringsArray, ...exprs: any[]): 
 };
 
 function iface() {
+    let basedir: string;
     try {
         // Get the filepath where module.exports.compile etc. was called
-        var basedir = path.dirname(stackTrace.get()[2].getFileName());
+        basedir = path.dirname(stackTrace.get()[2].getFileName());
     } catch (err) {
         basedir = process.cwd();
     }
-    var posts: PostTransform[] = [];
+
+    const posts: PostTransform[] = [];
+
     return { tag: tag, compile: compile, file: file };
 
     /**
@@ -38,11 +41,11 @@ function iface() {
      */
     async function tag(strings: string[] | string | TemplateStringsArray, ...exprs: any[]): Promise<string> {
         if (typeof strings === "string") strings = [strings];
-        var parts = [];
-        for (var i = 0; i < strings.length - 1; i++) {
+        const parts = [];
+        for (let i = 0; i < strings.length - 1; i++) {
             parts.push(strings[i], exprs[i] || "");
         }
-        parts.push(strings[i]);
+        parts.push(strings[strings.length - 1]);
         return compile(parts.join(""));
     }
 
@@ -51,9 +54,9 @@ function iface() {
      * @param src - The content of the input shader
      */
     async function compile(src: string, opts?: GlslifyOpts): Promise<string> {
-        if (!opts) opts = {};
-        var depper = gdeps(opts);
-        var deps = await p(depper.inline.bind(depper))(src, opts.basedir || basedir);
+        if (!opts) { opts = {}; }
+        const depper = createDepper(opts);
+        const deps = await p(depper.inline.bind(depper))(src, opts.basedir || basedir);
         return bundle(deps);
     }
 
@@ -62,24 +65,24 @@ function iface() {
      * @param filename - The filepath of the input shader
      */
     async function file(filename: string, opts?: GlslifyOpts): Promise<string> {
-        if (!opts) opts = {};
-        var depper = gdeps(opts);
-        var deps = await p(depper.add.bind(depper))(path.resolve(opts.basedir || basedir, filename));
+        if (!opts) { opts = {}; }
+        const depper = createDepper(opts);
+        const deps = await p(depper.add.bind(depper))(path.resolve(opts.basedir || basedir, filename));
         return bundle(deps);
     }
 
     /**
      * Create depper and install transformers.
      */
-    function gdeps(opts?: GlslifyOpts): Depper {
+    function createDepper(opts?: GlslifyOpts): Depper {
         if (!opts) opts = {};
-        var depper = glslifyDeps({ cwd: opts.basedir || basedir });
-        var transforms = opts.transform || [];
+        const depper = glslifyDeps({ cwd: opts.basedir || basedir });
+        let transforms = opts.transform || [];
         transforms = Array.isArray(transforms) ? transforms : [transforms];
         transforms.forEach(function(transform: any) {
             transform = Array.isArray(transform) ? transform : [transform];
-            var name = transform[0];
-            var opts = transform[1] || {};
+            const name = transform[0];
+            const opts = transform[1] || {};
             if (opts.post) {
                 posts.push({ name: name, opts: opts });
             } else {
@@ -93,14 +96,14 @@ function iface() {
      * Bundle deps and apply post transformations.
      */
     function bundle(deps: DepsInfo[]): string {
-        var source = glslifyBundle(deps);
+        let source = glslifyBundle(deps);
 
         // Load post transforms dynamically and apply them to the source
         posts.forEach(function(tr) {
-            var target = nodeResolve.sync(tr.name, { basedir: basedir });
-            var transform = require(target);
-            var src = transform(null, source, { post: true });
-            if (src) source = src;
+            const target = nodeResolve.sync(tr.name, { basedir: basedir });
+            const transform = require(target);
+            const src = transform(null, source, { post: true });
+            if (src) { source = src; }
         });
 
         return source;

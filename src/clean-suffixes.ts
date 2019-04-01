@@ -1,23 +1,23 @@
-var suffix = /^([^_]+)_(\d{4,})$/;
+const suffix = /^([^_]+)_(\d{4,})$/;
 
 /**
  * Remove redundant suffixes from identifier tokens
  */
 export default function clean(tokens: Token[]): Token[] {
-    var blacklist: { [data: string]: boolean } = {};
-    var index: { [pre: string]: { [suf: string]: Token[] } } = {};
+    const blacklist: { [data: string]: boolean } = {};
+    const index: { [pre: string]: { [suf: string]: Token[] } } = {};
 
-    for (var i = 0; i < tokens.length; i++) {
-        var token = tokens[i];
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
         if (token.type !== "ident") continue;
-        var match = token.data.match(suffix);
+        const match = token.data.match(suffix);
         if (!match) {
             blacklist[token.data] = true;
             continue;
         }
 
-        var pre = match[1];
-        var suf = match[2];
+        const pre = match[1];
+        const suf = match[2];
 
         index[pre] = index[pre] || {};
         index[pre][suf] = index[pre][suf] || [];
@@ -25,10 +25,10 @@ export default function clean(tokens: Token[]): Token[] {
     }
 
     Object.keys(index).forEach(function(prefix) {
-        var suffixes = Object.keys(index[prefix]);
+        const suffixes = Object.keys(index[prefix]);
         if (suffixes.length === 1 && !blacklist[prefix]) {
-            var tokens = index[prefix][suffixes[0]];
-            for (var i = 0; i < tokens.length; i++) {
+            const tokens = index[prefix][suffixes[0]];
+            for (let i = 0; i < tokens.length; i++) {
                 tokens[i].data = prefix;
             }
 
@@ -36,10 +36,10 @@ export default function clean(tokens: Token[]): Token[] {
         }
 
         suffixes.forEach(function(suffix, i) {
-            var token = index[prefix][suffix];
-            var rename = prefix + "_" + i;
+            const token = index[prefix][suffix];
+            const rename = prefix + "_" + i;
             if (blacklist[rename]) return;
-            for (var j = 0; j < token.length; j++) {
+            for (let j = 0; j < token.length; j++) {
                 token[j].data = rename;
             }
         });

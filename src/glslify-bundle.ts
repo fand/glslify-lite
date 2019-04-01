@@ -1,7 +1,6 @@
 /* eslint-disable no-redeclare */
 
 import hash = require("murmurhash-js/murmurhash3_gc");
-import trim = require("glsl-token-whitespace-trim");
 import tokenize = require("glsl-tokenizer/string");
 import inject = require("glsl-inject-defines");
 import descope = require("glsl-token-descope");
@@ -10,7 +9,6 @@ import scope = require("glsl-token-scope");
 import depth = require("glsl-token-depth");
 import copy = require("shallow-copy");
 
-import clean from "./clean-suffixes";
 import topoSort from "./topo-sort";
 import string from "./tokens-to-string";
 
@@ -46,10 +44,9 @@ class Bundle {
             }
         }
 
-        const src = string(tokens);
-
-        // Tokenize src again and tidy it up
-        this.src = string(clean(trim(tokenize(src))));
+        // Just use bundled source code.
+        // Original glslify cleans up and trims the tokens, but we don't need it.
+        this.src = string(tokens);
     }
 
     preprocess(dep: DepsInfo) {

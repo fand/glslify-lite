@@ -1,5 +1,6 @@
 import test from 'ava';
 import { file, compile, tag } from '../src/glslify';
+import * as convert from 'convert-source-map';
 
 test("node string", async t => {
     var output = await compile(
@@ -13,6 +14,15 @@ test("node string", async t => {
         ].join("\n")
     );
     t.assert(/taylorInvSqrt/.test(output), "contains parts of the file");
+
+    // Test sourcemaps
+    const lastLine = output.split('\n').pop();
+    t.assert(/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/.test(lastLine), "contains sourceMaps of the file");
+
+    const json = convert.fromComment(lastLine).toObject();
+    t.assert(typeof json.sources !== 'undefined', 'Sourcemap has sources property');
+    t.assert(typeof json.names !== 'undefined', 'Sourcemap has names property');
+    t.assert(typeof json.mappings !== 'undefined', 'Sourcemap has mapping property');
 });
 
 test("node simulated tagged template string", async t => {

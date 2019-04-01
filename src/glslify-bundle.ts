@@ -6,13 +6,13 @@ import tokenize = require("glsl-tokenizer/string");
 import inject = require("glsl-inject-defines");
 import descope = require("glsl-token-descope");
 import defines = require("glsl-token-defines");
-import string = require("glsl-token-string");
 import scope = require("glsl-token-scope");
 import depth = require("glsl-token-depth");
 import copy = require("shallow-copy");
 
 import clean from "./clean-suffixes";
 import topoSort from "./topo-sort";
+import string from "./token-to-string";
 
 export default function(deps: DepsInfo[]) {
     return inject(new Bundle(deps).src, {

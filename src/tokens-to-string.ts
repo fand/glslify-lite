@@ -1,46 +1,56 @@
-import * as sourceMap from 'source-map';
-import * as convert from 'convert-source-map';
+import * as sourceMap from "source-map";
+import * as convert from "convert-source-map";
 
-export default function tokensToStrign(tokens: Token[]): string {
+export default function tokensToString(tokens: Token[]): string {
     const output: string[] = [];
     const map = new sourceMap.SourceMapGenerator();
 
     let line = 1;
     let column = 1;
 
-    tokens.forEach(token => {
-        if (token.type === 'eof') return
+    const rawMaps: any = [];
 
-        output.push(token.data)
+    tokens.forEach(token => {
+        if (token.type === "eof") return;
+
+        output.push(token.data);
 
         const sourceFile = token.source;
-        if (!sourceFile) { return; }
+        const originalPos = token.original;
+        if (!sourceFile || !originalPos) {
+            return;
+        }
 
-        const originalLine = token.original ? token.original.line : token.line;
-        const originalColumn = token.original ? token.original.column : token.column;
-
-        map.addMapping({
+        const tokenMap = {
             source: sourceFile,
             original: {
-                line: originalLine,
-                column: originalColumn,
+                line: originalPos.line,
+                column: originalPos.column
             },
             generated: {
                 line: line,
                 column: column
-            },
-        });
+            }
+        };
+        rawMaps.push({ ...tokenMap, data: token.data });
+        map.addMapping(tokenMap);
 
         const lines = token.data.split(/\r\n|\r|\n/);
-        line += lines.length - 1
-        column = lines.length > 1 ?
-            lines[lines.length - 1].length :
-            (column + token.data.length);
-    })
+        if (lines.length > 1) {
+            // if token has multiple lines
+            line += lines.length - 1;
+            column = lines[lines.length - 1].length + 1;
+        } else {
+            column += token.data.length;
+        }
+    });
 
-    const src = output.join('');
+    const fs = require("fs");
+    fs.writeFileSync("map.json", JSON.stringify(rawMaps), "utf8");
+
+    const src = output.join("");
     const mapJSON = map.toString();
     const mapComment = convert.fromJSON(mapJSON).toComment();
 
-    return src + '\n' + mapComment;
+    return src + "\n" + mapComment;
 }

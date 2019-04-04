@@ -13,10 +13,11 @@ import topoSort from "./topo-sort";
 import string from "./tokens-to-string";
 
 export default function(deps: DepsInfo[]) {
-    return inject(new Bundle(deps).src, {
-        GLSLIFY: 1
-    });
-};
+    // return inject(new Bundle(deps).src, {
+    //     GLSLIFY: 1
+    // });
+    return new Bundle(deps).src;
+}
 
 class Bundle {
     src: string;
@@ -57,8 +58,29 @@ class Bundle {
         depth(tokens);
         scope(tokens);
 
+        // Note: tokens must be sorted by position
+        let lastLine = 1;
+        let lastColumn = 1;
+
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i];
+
+            token.source = dep.file;
+
+            // Save original position.
+            // Note: token.line and column is the end position of the token.
+            token.original = {
+                line: lastLine,
+                column: lastColumn
+            };
+            if (token.type === "whitespace") {
+                lastLine = token.line;
+                lastColumn = token.column + 1;
+            } else {
+                lastColumn += token.data.length;
+            }
+
+            // console.log(token.original, token.data.length, token.type);
             if (token.type !== "preprocessor") continue;
             if (!glslifyPreprocessor(token.data)) continue;
 
@@ -117,7 +139,10 @@ class Bundle {
 
         return result;
 
-        function resolve(dep: DepsInfo, bindings: string[][]): [string, Token[]] {
+        function resolve(
+            dep: DepsInfo,
+            bindings: string[][]
+        ): [string, Token[]] {
             // Compute suffix for module
             bindings.sort();
             const ident = bindings.join(":") + ":" + dep.id;
@@ -150,7 +175,9 @@ class Bundle {
                 const importName = data.name;
                 const importTarget = data.target;
 
-                const importBindings = Object.keys(importMaps).map(function(id) {
+                const importBindings = Object.keys(importMaps).map(function(
+                    id
+                ) {
                     const value = importMaps[id];
 
                     // floats/ints should not be renamed

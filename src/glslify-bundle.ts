@@ -2,7 +2,6 @@
 
 import hash = require("murmurhash-js/murmurhash3_gc");
 import tokenize = require("glsl-tokenizer/string");
-import inject = require("glsl-inject-defines");
 import descope = require("glsl-token-descope");
 import defines = require("glsl-token-defines");
 import scope = require("glsl-token-scope");
@@ -12,26 +11,52 @@ import copy = require("shallow-copy");
 import topoSort from "./topo-sort";
 import string from "./tokens-to-string";
 
-export default function(deps: DepsInfo[]) {
-    // return inject(new Bundle(deps).src, {
-    //     GLSLIFY: 1
-    // });
-    return new Bundle(deps).src;
+function glslifyPreprocessor(data: string): boolean {
+    return /#pragma glslify:/.test(data);
+}
+
+function glslifyExport(data: string): RegExpExecArray | null {
+    return /#pragma glslify:\s*export\(([^)]+)\)/.exec(data);
+}
+
+function glslifyImport(data: string): RegExpExecArray | null {
+    return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data);
+}
+
+function indexById(deps: DepsInfo[]): DepsHash {
+    return deps.reduce(function(hash: DepsHash, entry: DepsInfo) {
+        hash[entry.id] = entry;
+        return hash;
+    }, {});
+}
+
+function toMapping(maps?: string[]): {} | false {
+    if (!maps) return false;
+
+    return maps.reduce(function(
+        mapping: { [key: string]: string | undefined },
+        defn
+    ) {
+        const defns = defn.split(/\s?=\s?/g);
+
+        const expr = defns.pop();
+
+        defns.forEach(function(key) {
+            mapping[key] = expr;
+        });
+
+        return mapping;
+    },
+    {});
 }
 
 class Bundle {
-    src: string;
-    depList: DepsInfo[];
-    depIndex: DepsHash;
-    exported: {} = {};
-    cache: {} = {};
-    varCounter: number = 0;
+    public src: string;
+    private depIndex: DepsHash;
 
-    constructor(deps: DepsInfo[]) {
+    public constructor(deps: DepsInfo[]) {
         // Reorder dependencies topologically
         deps = topoSort(deps);
-
-        this.depList = deps;
         this.depIndex = indexById(deps);
 
         for (let i = 0; i < deps.length; i++) {
@@ -50,7 +75,7 @@ class Bundle {
         this.src = string(tokens);
     }
 
-    preprocess(dep: DepsInfo) {
+    private preprocess(dep: DepsInfo): void {
         const tokens = tokenize(dep.source);
         const imports = [];
         let exports = null;
@@ -93,8 +118,8 @@ class Bundle {
             } else if (imported) {
                 const name = imported[1];
                 const maps = imported[2].split(/\s?,\s?/g);
-                const path = maps
-                    .shift()!
+                const map0 = maps.shift() as string;
+                const path = map0
                     .trim()
                     .replace(/^'|'$/g, "")
                     .replace(/^"|"$/g, "");
@@ -133,11 +158,8 @@ class Bundle {
     /**
      * @param entry - An array of dependency entry returned from deps
      */
-    bundle(entry: DepsInfo): Token[] {
+    private bundle(entry: DepsInfo): Token[] {
         const resolved: { [name: string]: boolean } = {};
-        const result = resolve(entry, [])[1];
-
-        return result;
 
         function resolve(
             dep: DepsInfo,
@@ -152,8 +174,13 @@ class Bundle {
                 suffix = "";
             }
 
+            const parsed = dep.parsed;
+            if (!parsed) {
+                throw "Dep is not preprocessed";
+            }
+
             // Test if export is already resolved
-            const exportName = dep.parsed!.exports + suffix;
+            const exportName = parsed.exports + suffix;
             if (resolved[exportName]) {
                 return [exportName, []];
             }
@@ -166,7 +193,7 @@ class Bundle {
             }
 
             // Resolve all dependencies
-            const imports = dep.parsed!.imports;
+            const imports = parsed.imports;
             const edits: [number, Token[]][] = [];
             for (let i = 0; i < imports.length; ++i) {
                 const data = imports[i];
@@ -206,9 +233,9 @@ class Bundle {
             }
 
             // Rename tokens
-            const parsedTokens = dep.parsed!.tokens.map(copy);
+            const parsedTokens = parsed.tokens.map(copy);
             const parsedDefs = defines(parsedTokens);
-            let tokens = descope(parsedTokens, function(local: any) {
+            let tokens = descope(parsedTokens, function(local: number) {
                 if (parsedDefs[local]) return local;
                 if (rename[local]) return rename[local];
 
@@ -231,44 +258,15 @@ class Bundle {
             resolved[exportName] = true;
             return [exportName, tokens];
         }
+
+        const result = resolve(entry, [])[1];
+        return result;
     }
 }
 
-function glslifyPreprocessor(data: string): boolean {
-    return /#pragma glslify:/.test(data);
-}
-
-function glslifyExport(data: string) {
-    return /#pragma glslify:\s*export\(([^)]+)\)/.exec(data);
-}
-
-function glslifyImport(data: string) {
-    return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data);
-}
-
-function indexById(deps: DepsInfo[]): DepsHash {
-    return deps.reduce(function(hash: DepsHash, entry: DepsInfo) {
-        hash[entry.id] = entry;
-        return hash;
-    }, {});
-}
-
-function toMapping(maps?: string[]) {
-    if (!maps) return false;
-
-    return maps.reduce(function(
-        mapping: { [key: string]: string | undefined },
-        defn
-    ) {
-        const defns = defn.split(/\s?=\s?/g);
-
-        const expr = defns.pop();
-
-        defns.forEach(function(key) {
-            mapping[key] = expr;
-        });
-
-        return mapping;
-    },
-    {});
+export default function(deps: DepsInfo[]): string {
+    // return inject(new Bundle(deps).src, {
+    //     GLSLIFY: 1
+    // });
+    return new Bundle(deps).src;
 }

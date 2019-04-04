@@ -6,7 +6,7 @@
     "scripts": {
         "build": "tsc -d",
         "lint": "eslint src/**/*.ts",
-        "test": "ava test"
+        "test": "ava test --verbose"
     },
     "husky": {
         "hooks": {

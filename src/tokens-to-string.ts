@@ -8,8 +8,6 @@ export default function tokensToString(tokens: Token[]): string {
     let line = 1;
     let column = 1;
 
-    const rawMaps: any = [];
-
     tokens.forEach(token => {
         if (token.type === "eof") return;
 
@@ -32,7 +30,6 @@ export default function tokensToString(tokens: Token[]): string {
                 column: column
             }
         };
-        rawMaps.push({ ...tokenMap, data: token.data });
         map.addMapping(tokenMap);
 
         const lines = token.data.split(/\r\n|\r|\n/);
@@ -44,9 +41,6 @@ export default function tokensToString(tokens: Token[]): string {
             column += token.data.length;
         }
     });
-
-    const fs = require("fs");
-    fs.writeFileSync("map.json", JSON.stringify(rawMaps), "utf8");
 
     const src = output.join("");
     const mapJSON = map.toString();

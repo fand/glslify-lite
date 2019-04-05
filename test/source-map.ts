@@ -132,3 +132,42 @@ test("Import npm packages", async t => {
 
     consumer.destroy();
 });
+
+test("nested imports", async t => {
+    const output = await file(
+        path.resolve(__dirname, "fixtures/nest-conflict-entry.glsl")
+    );
+
+    // Test sourcemaps
+    const lastLine = output.split("\n").pop();
+    const sm = convert.fromComment(lastLine).toObject();
+    const consumer = await new sourceMap.SourceMapConsumer(sm);
+
+    const hasPos = (
+        line: number,
+        column: number,
+        expLine: number,
+        expCol: number,
+        source: string
+    ) => {
+        const op = gOP(output, { line, column }, consumer);
+        t.deepEqual(
+            { line: op.line, column: op.column },
+            { line: expLine, column: expCol }
+        );
+        t.regex(op.source, new RegExp(source));
+    };
+
+    hasPos(1, 1, 1, 1, "nest-conflict-entry");
+    hasPos(3, 1, 3, 1, "nest-conflict-entry");
+
+    hasPos(5, 1, 1, 1, "nest-conflict-2");
+
+    hasPos(11, 1, 3, 1, "nest-conflict-1");
+    hasPos(12, 1, 4, 1, "nest-conflict-1");
+
+    hasPos(17, 1, 8, 1, "nest-conflict-entry");
+    hasPos(19, 1, 10, 1, "nest-conflict-entry");
+
+    consumer.destroy();
+});

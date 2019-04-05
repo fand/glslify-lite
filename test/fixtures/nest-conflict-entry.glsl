@@ -6,5 +6,5 @@ const float d;
 #pragma glslify: a = require(./nest-conflict-1.glsl)
 
 void main() {
-
+  gl_FragColor = vec4(a, b, 1);
 }

@@ -5,18 +5,22 @@ import * as stackTrace from "stack-trace";
 import p from "pify";
 import glslifyDeps = require("glslify-deps");
 
-interface GlslifyOpts {
-    basedir?: string;
-    transform?: [string, any][]; // eslint-disable-line
+interface TransformOpts {
+    post?: boolean;
 }
 
-type Transform = any; // eslint-disable-line
+type Transform = [string, TransformOpts]; // eslint-disable-line
+
+interface GlslifyOpts {
+    basedir?: string;
+    transform?: Transform[];
+}
 
 class Glslifier {
     private basedir: string;
     private posts: PostTransform[] = [];
 
-    constructor() {
+    public constructor() {
         try {
             // Get the filepath where module.exports.compile etc. was called
             this.basedir = path.dirname(stackTrace.get()[2].getFileName());
@@ -62,10 +66,9 @@ class Glslifier {
     private createDepper(opts?: GlslifyOpts): Depper {
         if (!opts) opts = {};
         const depper = glslifyDeps({ cwd: opts.basedir || this.basedir });
-        let transforms = opts.transform || [];
-        transforms = Array.isArray(transforms) ? transforms : [transforms];
+
+        const transforms = opts.transform || [];
         transforms.forEach((transform: Transform) => {
-            transform = Array.isArray(transform) ? transform : [transform];
             const name = transform[0];
             const opts = transform[1] || {};
             if (opts.post) {
@@ -74,6 +77,7 @@ class Glslifier {
                 depper.transform(name, opts);
             }
         });
+
         return depper;
     }
 

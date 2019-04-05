@@ -1,6 +1,6 @@
 /* eslint-disable no-redeclare */
 
-import hash = require("murmurhash-js/murmurhash3_gc");
+import hash from "murmurhash-js/murmurhash3_gc";
 import tokenize = require("glsl-tokenizer/string");
 import descope = require("glsl-token-descope");
 import defines = require("glsl-token-defines");
@@ -24,30 +24,34 @@ function glslifyImport(data: string): RegExpExecArray | null {
 }
 
 function indexById(deps: DepsInfo[]): DepsHash {
-    return deps.reduce(function(hash: DepsHash, entry: DepsInfo) {
+    return deps.reduce((hash: DepsHash, entry: DepsInfo): DepsHash => {
         hash[entry.id] = entry;
         return hash;
     }, {});
 }
 
+interface Mappings {
+    [key: string]: string | undefined;
+}
+
+type Binding = string[];
+
 function toMapping(maps?: string[]): {} | false {
     if (!maps) return false;
 
-    return maps.reduce(function(
-        mapping: { [key: string]: string | undefined },
-        defn
-    ) {
+    return maps.reduce((mapping: Mappings, defn): Mappings => {
         const defns = defn.split(/\s?=\s?/g);
 
         const expr = defns.pop();
 
-        defns.forEach(function(key) {
-            mapping[key] = expr;
-        });
+        defns.forEach(
+            (key): void => {
+                mapping[key] = expr;
+            }
+        );
 
         return mapping;
-    },
-    {});
+    }, {});
 }
 
 class Bundle {
@@ -186,7 +190,7 @@ class Bundle {
             }
 
             // Initialize map for variable renamings based on bindings
-            const rename: { [from: string]: string | Token[] } = {};
+            const rename: { [from: string]: string } = {};
             for (let i = 0; i < bindings.length; ++i) {
                 const binding = bindings[i];
                 rename[binding[0]] = binding[1];
@@ -202,30 +206,30 @@ class Bundle {
                 const importName = data.name;
                 const importTarget = data.target;
 
-                const importBindings = Object.keys(importMaps).map(function(
-                    id
-                ) {
-                    const value = importMaps[id];
+                const importBindings = Object.keys(importMaps).map(
+                    (id): Binding => {
+                        const value = importMaps[id];
 
-                    // floats/ints should not be renamed
-                    if (value.match(/^\d+(?:\.\d+?)?$/g)) {
-                        return [id, value];
+                        // floats/ints should not be renamed
+                        if (value.match(/^\d+(?:\.\d+?)?$/g)) {
+                            return [id, value];
+                        }
+
+                        // properties (uVec.x, ray.origin, ray.origin.xy etc.) should
+                        // have their host identifiers renamed
+                        const parent = value.match(/^([^.]+)\.(.+)$/);
+                        if (parent) {
+                            return [
+                                id,
+                                (rename[parent[1]] || parent[1] + suffix) +
+                                    "." +
+                                    parent[2]
+                            ];
+                        }
+
+                        return [id, rename[value] || value + suffix];
                     }
-
-                    // properties (uVec.x, ray.origin, ray.origin.xy etc.) should
-                    // have their host identifiers renamed
-                    const parent = value.match(/^([^.]+)\.(.+)$/);
-                    if (parent) {
-                        return [
-                            id,
-                            (rename[parent[1]] || parent[1] + suffix) +
-                                "." +
-                                parent[2]
-                        ];
-                    }
-
-                    return [id, rename[value] || value + suffix];
-                });
+                );
 
                 const importTokens = resolve(importTarget, importBindings);
                 rename[importName] = importTokens[0];
@@ -235,17 +239,22 @@ class Bundle {
             // Rename tokens
             const parsedTokens = parsed.tokens.map(copy);
             const parsedDefs = defines(parsedTokens);
-            let tokens = descope(parsedTokens, function(local: number) {
-                if (parsedDefs[local]) return local;
-                if (rename[local]) return rename[local];
+            let tokens = descope(
+                parsedTokens,
+                (local: number): string => {
+                    if (parsedDefs[local]) return local + "";
+                    if (rename[local]) return rename[local] + "";
 
-                return local + suffix;
-            });
+                    return local + suffix;
+                }
+            );
 
             // Insert edits
-            edits.sort((a, b) => {
-                return b[0] - a[0];
-            });
+            edits.sort(
+                (a, b): number => {
+                    return b[0] - a[0];
+                }
+            );
 
             for (let i = 0; i < edits.length; ++i) {
                 const edit = edits[i];

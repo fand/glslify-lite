@@ -3,16 +3,16 @@
  */
 export default function topoSort(deps: DepsInfo[]): DepsInfo[] {
     // Build reversed adjacency list
-    var adj: { [id: number]: number[] } = {};
-    var inDegree: { [id: number]: number } = {};
-    var index: { [id: number]: DepsInfo } = {};
+    const adj: { [id: number]: number[] } = {};
+    const inDegree: { [id: number]: number } = {};
+    const index: { [id: number]: DepsInfo } = {};
     deps.forEach(function(dep) {
-        var v = dep.id;
-        var nbhd = Object.keys(dep.deps);
+        const v = dep.id;
+        const nbhd = Object.keys(dep.deps);
         index[dep.id] = dep;
         inDegree[v] = nbhd.length;
         nbhd.forEach(function(filename) {
-            var u = dep.deps[filename];
+            const u = dep.deps[filename];
             if (adj[u]) {
                 adj[u].push(v);
             } else {
@@ -22,10 +22,10 @@ export default function topoSort(deps: DepsInfo[]): DepsInfo[] {
     });
 
     // Initialize toVisit queue
-    var result: number[] = [];
-    var inverse: { [id: number]: number } = {};
+    const result: number[] = [];
+    const inverse: { [id: number]: number } = {};
     deps.forEach(function(dep) {
-        var v = dep.id;
+        const v = dep.id;
         if (!adj[v]) {
             adj[v] = [];
         }
@@ -36,8 +36,8 @@ export default function topoSort(deps: DepsInfo[]): DepsInfo[] {
     });
 
     // Run BFS
-    for (var ptr = 0; ptr < result.length; ptr++) {
-        var v = result[ptr];
+    for (let ptr = 0; ptr < result.length; ptr++) {
+        const v = result[ptr];
         adj[v].forEach(function(u) {
             if (--inDegree[u] === 0) {
                 inverse[u] = result.length;
@@ -52,9 +52,9 @@ export default function topoSort(deps: DepsInfo[]): DepsInfo[] {
 
     // Relabel dependencies
     return result.map(function(v) {
-        var dep = index[v];
-        var deps = dep.deps;
-        var ndeps: { [filename: string]: number } = {};
+        const dep = index[v];
+        const deps = dep.deps;
+        const ndeps: { [filename: string]: number } = {};
         Object.keys(deps).forEach(function(filename) {
             ndeps[filename] = inverse[deps[filename]] | 0;
         });

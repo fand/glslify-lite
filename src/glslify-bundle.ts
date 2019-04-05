@@ -1,85 +1,129 @@
 /* eslint-disable no-redeclare */
 
 import hash = require("murmurhash-js/murmurhash3_gc");
-import trim = require("glsl-token-whitespace-trim");
 import tokenize = require("glsl-tokenizer/string");
-import inject = require("glsl-inject-defines");
 import descope = require("glsl-token-descope");
 import defines = require("glsl-token-defines");
-import string = require("glsl-token-string");
 import scope = require("glsl-token-scope");
 import depth = require("glsl-token-depth");
 import copy = require("shallow-copy");
 
-import clean from "./clean-suffixes";
 import topoSort from "./topo-sort";
+import string from "./tokens-to-string";
 
-export default function(deps: DepsInfo[]) {
-    return inject(new Bundle(deps).src, {
-        GLSLIFY: 1
-    });
-};
+function glslifyPreprocessor(data: string): boolean {
+    return /#pragma glslify:/.test(data);
+}
+
+function glslifyExport(data: string): RegExpExecArray | null {
+    return /#pragma glslify:\s*export\(([^)]+)\)/.exec(data);
+}
+
+function glslifyImport(data: string): RegExpExecArray | null {
+    return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data);
+}
+
+function indexById(deps: DepsInfo[]): DepsHash {
+    return deps.reduce(function(hash: DepsHash, entry: DepsInfo) {
+        hash[entry.id] = entry;
+        return hash;
+    }, {});
+}
+
+function toMapping(maps?: string[]): {} | false {
+    if (!maps) return false;
+
+    return maps.reduce(function(
+        mapping: { [key: string]: string | undefined },
+        defn
+    ) {
+        const defns = defn.split(/\s?=\s?/g);
+
+        const expr = defns.pop();
+
+        defns.forEach(function(key) {
+            mapping[key] = expr;
+        });
+
+        return mapping;
+    },
+    {});
+}
 
 class Bundle {
-    src: string;
-    depList: DepsInfo[];
-    depIndex: DepsHash;
-    exported: {} = {};
-    cache: {} = {};
-    varCounter: number = 0;
+    public src: string;
+    private depIndex: DepsHash;
 
-    constructor(deps: DepsInfo[]) {
+    public constructor(deps: DepsInfo[]) {
         // Reorder dependencies topologically
         deps = topoSort(deps);
-
-        this.depList = deps;
         this.depIndex = indexById(deps);
 
-        for (var i = 0; i < deps.length; i++) {
+        for (let i = 0; i < deps.length; i++) {
             this.preprocess(deps[i]);
         }
 
         let tokens: Token[] = [];
-        for (var i = 0; i < deps.length; i++) {
+        for (let i = 0; i < deps.length; i++) {
             if (deps[i].entry) {
                 tokens = tokens.concat(this.bundle(deps[i]));
             }
         }
 
-        const src = string(tokens);
-
-        // Tokenize src again and tidy it up
-        this.src = string(clean(trim(tokenize(src))));
+        // Just use bundled source code.
+        // Original glslify cleans up and trims the tokens, but we don't need it.
+        this.src = string(tokens);
     }
 
-    preprocess(dep: DepsInfo) {
-        var tokens = tokenize(dep.source);
-        var imports = [];
-        var exports = null;
+    private preprocess(dep: DepsInfo): void {
+        const tokens = tokenize(dep.source);
+        const imports = [];
+        let exports = null;
 
         depth(tokens);
         scope(tokens);
 
-        for (var i = 0; i < tokens.length; i++) {
-            var token = tokens[i];
+        // Note: tokens must be sorted by position
+        let lastLine = 1;
+        let lastColumn = 1;
+
+        for (let i = 0; i < tokens.length; i++) {
+            const token = tokens[i];
+
+            token.source = dep.file;
+
+            // Save original position.
+            // Note: token.line and column is the end position of the token.
+            token.original = {
+                line: lastLine,
+                column: lastColumn
+            };
+            if (token.type === "whitespace") {
+                lastLine = token.line;
+                lastColumn = token.column + 1;
+            } else {
+                lastColumn += token.data.length;
+            }
+
+            // console.log(token.original, token.data.length, token.type);
             if (token.type !== "preprocessor") continue;
             if (!glslifyPreprocessor(token.data)) continue;
 
-            var exported = glslifyExport(token.data);
-            var imported = glslifyImport(token.data);
+            const exported = glslifyExport(token.data);
+            const imported = glslifyImport(token.data);
 
             if (exported) {
                 exports = exported[1];
                 tokens.splice(i--, 1);
             } else if (imported) {
-                var name = imported[1];
-                var maps = imported[2].split(/\s?,\s?/g);
-                var path = maps
-                    .shift()!
+                const name = imported[1];
+                const maps = imported[2].split(/\s?,\s?/g);
+                const map0 = maps.shift() as string;
+                const path = map0
                     .trim()
                     .replace(/^'|'$/g, "")
                     .replace(/^"|"$/g, "");
-                var target = this.depIndex[dep.deps[path]];
+                const target = this.depIndex[dep.deps[path]];
                 imports.push({
                     name: name,
                     path: path,
@@ -91,7 +135,7 @@ class Bundle {
             }
         }
 
-        var eof = tokens[tokens.length - 1];
+        const eof = tokens[tokens.length - 1];
         if (eof && eof.type === "eof") {
             tokens.pop();
         }
@@ -114,47 +158,54 @@ class Bundle {
     /**
      * @param entry - An array of dependency entry returned from deps
      */
-    bundle(entry: DepsInfo): Token[] {
-        var resolved: { [name: string]: boolean } = {};
-        var result = resolve(entry, [])[1];
+    private bundle(entry: DepsInfo): Token[] {
+        const resolved: { [name: string]: boolean } = {};
 
-        return result;
-
-        function resolve(dep: DepsInfo, bindings: string[][]): [string, Token[]] {
+        function resolve(
+            dep: DepsInfo,
+            bindings: string[][]
+        ): [string, Token[]] {
             // Compute suffix for module
             bindings.sort();
-            var ident = bindings.join(":") + ":" + dep.id;
-            var suffix = "_" + hash(ident);
+            const ident = bindings.join(":") + ":" + dep.id;
+            let suffix = "_" + hash(ident);
 
             if (dep.entry) {
                 suffix = "";
             }
 
+            const parsed = dep.parsed;
+            if (!parsed) {
+                throw "Dep is not preprocessed";
+            }
+
             // Test if export is already resolved
-            var exportName = dep.parsed!.exports + suffix;
+            const exportName = parsed.exports + suffix;
             if (resolved[exportName]) {
                 return [exportName, []];
             }
 
             // Initialize map for variable renamings based on bindings
-            var rename: { [from: string]: string | Token[] } = {};
-            for (var i = 0; i < bindings.length; ++i) {
-                var binding = bindings[i];
+            const rename: { [from: string]: string | Token[] } = {};
+            for (let i = 0; i < bindings.length; ++i) {
+                const binding = bindings[i];
                 rename[binding[0]] = binding[1];
             }
 
             // Resolve all dependencies
-            var imports = dep.parsed!.imports;
-            var edits: [number, Token[]][] = [];
-            for (var i = 0; i < imports.length; ++i) {
-                var data = imports[i];
+            const imports = parsed.imports;
+            const edits: [number, Token[]][] = [];
+            for (let i = 0; i < imports.length; ++i) {
+                const data = imports[i];
 
-                var importMaps = data.maps;
-                var importName = data.name;
-                var importTarget = data.target;
+                const importMaps = data.maps;
+                const importName = data.name;
+                const importTarget = data.target;
 
-                var importBindings = Object.keys(importMaps).map(function(id) {
-                    var value = importMaps[id];
+                const importBindings = Object.keys(importMaps).map(function(
+                    id
+                ) {
+                    const value = importMaps[id];
 
                     // floats/ints should not be renamed
                     if (value.match(/^\d+(?:\.\d+?)?$/g)) {
@@ -163,7 +214,7 @@ class Bundle {
 
                     // properties (uVec.x, ray.origin, ray.origin.xy etc.) should
                     // have their host identifiers renamed
-                    var parent = value.match(/^([^.]+)\.(.+)$/);
+                    const parent = value.match(/^([^.]+)\.(.+)$/);
                     if (parent) {
                         return [
                             id,
@@ -176,15 +227,15 @@ class Bundle {
                     return [id, rename[value] || value + suffix];
                 });
 
-                var importTokens = resolve(importTarget, importBindings);
+                const importTokens = resolve(importTarget, importBindings);
                 rename[importName] = importTokens[0];
                 edits.push([data.index, importTokens[1]]);
             }
 
             // Rename tokens
-            var parsedTokens = dep.parsed!.tokens.map(copy);
-            var parsedDefs = defines(parsedTokens);
-            var tokens = descope(parsedTokens, function(local: any) {
+            const parsedTokens = parsed.tokens.map(copy);
+            const parsedDefs = defines(parsedTokens);
+            let tokens = descope(parsedTokens, function(local: number) {
                 if (parsedDefs[local]) return local;
                 if (rename[local]) return rename[local];
 
@@ -196,8 +247,8 @@ class Bundle {
                 return b[0] - a[0];
             });
 
-            for (var i = 0; i < edits.length; ++i) {
-                var edit = edits[i];
+            for (let i = 0; i < edits.length; ++i) {
+                const edit = edits[i];
                 tokens = tokens
                     .slice(0, edit[0])
                     .concat(edit[1])
@@ -207,44 +258,15 @@ class Bundle {
             resolved[exportName] = true;
             return [exportName, tokens];
         }
+
+        const result = resolve(entry, [])[1];
+        return result;
     }
 }
 
-function glslifyPreprocessor(data: string): boolean {
-    return /#pragma glslify:/.test(data);
-}
-
-function glslifyExport(data: string) {
-    return /#pragma glslify:\s*export\(([^)]+)\)/.exec(data);
-}
-
-function glslifyImport(data: string) {
-    return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data);
-}
-
-function indexById(deps: DepsInfo[]): DepsHash {
-    return deps.reduce(function(hash: DepsHash, entry: DepsInfo) {
-        hash[entry.id] = entry;
-        return hash;
-    }, {});
-}
-
-function toMapping(maps?: string[]) {
-    if (!maps) return false;
-
-    return maps.reduce(function(
-        mapping: { [key: string]: string | undefined },
-        defn
-    ) {
-        const defns = defn.split(/\s?=\s?/g);
-
-        var expr = defns.pop();
-
-        defns.forEach(function(key) {
-            mapping[key] = expr;
-        });
-
-        return mapping;
-    },
-    {});
+export default function(deps: DepsInfo[]): string {
+    // return inject(new Bundle(deps).src, {
+    //     GLSLIFY: 1
+    // });
+    return new Bundle(deps).src;
 }

@@ -1,10 +1,5 @@
 /// <reference path="./core.d.ts"/>
 
-declare module "glsl-token-whitespace-trim" {
-    function trim(tokens: Token[]): Token[];
-    export = trim;
-}
-
 declare module "glsl-tokenizer/string" {
     function tokenize(arg: string): Token[];
     export = tokenize;

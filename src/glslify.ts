@@ -11,10 +11,6 @@ interface GlslifyOpts {
 }
 
 interface GlslifyInterface {
-    tag(
-        strings: string[] | string | TemplateStringsArray,
-        ...exprs: any[] // eslint-disable-line
-    ): Promise<string>;
     compile(src: string, opts?: GlslifyOpts): Promise<string>;
     file(src: string, opts?: GlslifyOpts): Promise<string>;
 }
@@ -103,23 +99,7 @@ function iface(): GlslifyInterface {
         return bundle(deps);
     }
 
-    /**
-     * Bundle
-     */
-    async function tag(
-        strings: string[] | string | TemplateStringsArray,
-        ...exprs: any[] // eslint-disable-line
-    ): Promise<string> {
-        if (typeof strings === "string") strings = [strings];
-        const parts: string[] = [];
-        for (let i = 0; i < strings.length - 1; i++) {
-            parts.push(strings[i], exprs[i] || "");
-        }
-        parts.push(strings[strings.length - 1]);
-        return compile(parts.join(""));
-    }
-
-    return { tag, compile, file };
+    return { compile, file };
 }
 
 export function compile(src: string, opts?: GlslifyOpts): Promise<string> {
@@ -128,11 +108,4 @@ export function compile(src: string, opts?: GlslifyOpts): Promise<string> {
 
 export function file(file: string, opts?: GlslifyOpts): Promise<string> {
     return iface().file(file, opts);
-}
-
-export function tag(
-    strings: string[] | TemplateStringsArray,
-    ...exprs: any[] // eslint-disable-line
-): Promise<string> {
-    return iface().tag(strings, ...exprs);
 }

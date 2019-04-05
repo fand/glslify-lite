@@ -1,7 +1,7 @@
 {
-    "name": "glslify-for-live",
+    "name": "glslify-lite",
     "version": "0.0.0",
-    "description": "A fork of [glslify](https://github.com/glslify/glslify) for linters, live coding, etc.",
+    "description": "A fast, lightweight fork of glslify",
     "main": "lib/index.js",
     "scripts": {
         "build": "tsc -d",

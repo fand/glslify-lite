@@ -1,15 +1,9 @@
 import test from "ava";
 import * as path from "path";
-import { file, compile } from "../src/glslify";
+import { file } from "../src/glslify";
 import * as convert from "convert-source-map";
 import * as sourceMap from "source-map";
-
-type MapPos = {
-    line: number;
-    column: number;
-    name: string | null;
-    source: string | null;
-};
+import { createPosTest } from "./_util";
 
 // Util: get original position
 const gOP = (
@@ -55,7 +49,7 @@ const gOP = (
     return undefined;
 };
 
-test("Import npm packages", async t => {
+test("Import npm packages", async (t): Promise<void> => {
     const output = await file(path.resolve(__dirname, "fixtures/test01.frag"));
 
     // Test sourcemaps
@@ -74,7 +68,7 @@ test("Import npm packages", async t => {
         column: number,
         expLine: number,
         expCol: number
-    ) => {
+    ): void => {
         const op = gOP(output, { line, column }, consumer);
         // console.log(line, column, op.line, op.column);
         t.deepEqual(
@@ -126,7 +120,7 @@ test("Import npm packages", async t => {
     consumer.destroy();
 });
 
-test("nested imports", async t => {
+test("nested imports", async (t): Promise<void> => {
     const output = await file(
         path.resolve(__dirname, "fixtures/nest-conflict-entry.glsl")
     );
@@ -135,21 +129,7 @@ test("nested imports", async t => {
     const lastLine = output.split("\n").pop();
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-
-    const hasPos = (
-        line: number,
-        column: number,
-        expLine: number,
-        expCol: number,
-        source: string
-    ) => {
-        const op = gOP(output, { line, column }, consumer);
-        t.deepEqual(
-            { line: op.line, column: op.column },
-            { line: expLine, column: expCol }
-        );
-        t.regex(op.source, new RegExp(source));
-    };
+    const hasPos = createPosTest(t, output, consumer);
 
     hasPos(1, 1, 1, 1, "nest-conflict-entry");
     hasPos(3, 1, 3, 1, "nest-conflict-entry");

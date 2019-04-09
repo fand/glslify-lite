@@ -70,3 +70,10 @@ type Token = {
         column: number;
     };
 };
+
+interface MapPos {
+    line: number;
+    column: number;
+    name: string | null;
+    source: string | null;
+}

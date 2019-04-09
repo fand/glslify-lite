@@ -7,7 +7,7 @@ import depth = require("glsl-token-depth");
 import copy = require("shallow-copy");
 
 import topoSort from "./topo-sort";
-import string from "./tokens-to-string";
+import tokensToString from "./tokens-to-string";
 
 function glslifyPreprocessor(data: string): boolean {
     return /#pragma glslify:/.test(data);
@@ -74,7 +74,7 @@ class Bundle {
 
         // Just use bundled source code.
         // Original glslify cleans up and trims the tokens, but we don't need it.
-        this.src = string(tokens);
+        this.src = tokensToString(tokens);
     }
 
     private preprocess(dep: DepsInfo): void {

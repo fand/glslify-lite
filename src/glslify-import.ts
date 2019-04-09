@@ -25,9 +25,14 @@ export default async (src: string, filepath: string): Promise<string> => {
         const strLines = str.split("\n");
         for (let i = 0; i < strLines.length; i++) {
             const line = strLines[i];
-            const rawImportPath = getImportPath(line) || getIncludePath(line);
+            let rawImportPath = getImportPath(line) || getIncludePath(line);
 
             if (rawImportPath) {
+                // Append "./" so that glsl-resolve can find the file
+                if (!rawImportPath.match(/^\.\//)) {
+                    rawImportPath = `./${rawImportPath}`;
+                }
+
                 const importPath = await p(resolve)(rawImportPath, { basedir });
                 const importFile = await p(fs.readFile)(importPath, "utf8");
                 await dig(importFile, importPath);

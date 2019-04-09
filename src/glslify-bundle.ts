@@ -1,5 +1,3 @@
-/* eslint-disable no-redeclare */
-
 import hash from "murmurhash-js/murmurhash3_gc";
 import tokenize = require("glsl-tokenizer/string");
 import descope = require("glsl-token-descope");
@@ -19,7 +17,7 @@ function glslifyExport(data: string): RegExpExecArray | null {
     return /#pragma glslify:\s*export\(([^)]+)\)/.exec(data);
 }
 
-function glslifyImport(data: string): RegExpExecArray | null {
+function glslifyRequire(data: string): RegExpExecArray | null {
     return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data);
 }
 
@@ -114,11 +112,11 @@ class Bundle {
             if (!glslifyPreprocessor(token.data)) continue;
 
             const exported = glslifyExport(token.data);
-            const imported = glslifyImport(token.data);
+            const imported = glslifyRequire(token.data);
 
             if (exported) {
                 exports = exported[1];
-                tokens.splice(i--, 1);
+                tokens.splice(i--, 1); // Delete this token
             } else if (imported) {
                 const name = imported[1];
                 const maps = imported[2].split(/\s?,\s?/g);
@@ -135,7 +133,7 @@ class Bundle {
                     maps: toMapping(maps),
                     index: i
                 });
-                tokens.splice(i--, 1);
+                tokens.splice(i--, 1); // Delete this token
             }
         }
 

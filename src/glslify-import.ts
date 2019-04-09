@@ -1,5 +1,3 @@
-import string = require("glsl-token-string");
-import tokenize = require("glsl-tokenizer");
 import resolve = require("glsl-resolve");
 import path = require("path");
 import fs = require("fs");
@@ -9,6 +7,11 @@ import p from "pify";
 
 function getImportPath(data: string): string | void {
     const m = /#pragma glslify:\s*import\(([^)]+)\)/.exec(data);
+    if (m && m[1]) return m[1];
+}
+
+function getIncludePath(data: string): string | void {
+    const m = /#include\s+"([^"]+)"/.exec(data);
     if (m && m[1]) return m[1];
 }
 
@@ -22,7 +25,7 @@ export default async (src: string, filepath: string): Promise<string> => {
         const strLines = str.split("\n");
         for (let i = 0; i < strLines.length; i++) {
             const line = strLines[i];
-            const rawImportPath = getImportPath(line);
+            const rawImportPath = getImportPath(line) || getIncludePath(line);
 
             if (rawImportPath) {
                 const importPath = await p(resolve)(rawImportPath, { basedir });

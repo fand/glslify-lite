@@ -19,11 +19,4 @@ test("node string", async t => {
 test("node file", async t => {
     var output = await file(path.resolve(__dirname, "fixtures/test01.frag"));
     t.assert(/taylorInvSqrt/.test(output), "contains parts of the file");
-
-    var fs = require("fs");
-    fs.writeFileSync(
-        path.resolve(__dirname, "fixtures/test01_result.frag"),
-        output,
-        "utf8"
-    );
 });

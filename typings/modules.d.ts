@@ -47,3 +47,13 @@ declare module "glslify-deps" {
     function deps(opts: DepperOptions): Depper;
     export = deps;
 }
+
+declare module "glsl-tokenizer" {
+    function tokenize(src: string): Token[];
+    export = tokenize;
+}
+
+declare module "glsl-resolve" {
+    function resolve(path: string, opts: { basedir: string }): Promise<string>;
+    export = resolve;
+}

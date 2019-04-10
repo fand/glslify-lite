@@ -5,55 +5,11 @@ import * as convert from "convert-source-map";
 import * as sourceMap from "source-map";
 import { createPosTest } from "./_util";
 
-// Util: get original position
-const gOP = (
-    src: string,
-    pos: { line: number; column: number },
-    consumer: sourceMap.SourceMapConsumer
-): MapPos | undefined => {
-    // Try exact line
-    const op = consumer.originalPositionFor(pos);
-    if (op.line !== null) {
-        return op;
-    }
-
-    const lines = src.split("\n");
-    const line = lines[pos.line - 1]; // pos.line is 1-origin
-
-    // Find nearest mappings
-    let pBefore: MapPos, pAfter: MapPos;
-    for (let i = pos.column - 1; i > 0; i--) {
-        const op = consumer.originalPositionFor({ line: pos.line, column: i });
-        if (op.line !== null) {
-            pBefore = op;
-            break;
-        }
-    }
-    for (let i = pos.column + 1; i <= line.length + 1; i++) {
-        const op = consumer.originalPositionFor({ line: pos.line, column: i });
-        if (op.line !== null) {
-            pAfter = op;
-            break;
-        }
-    }
-
-    if (pBefore && pAfter) {
-        return pos.column - pBefore.column < pAfter.column - pos.column
-            ? pBefore
-            : pAfter;
-    }
-    if (pBefore || pAfter) {
-        return pBefore || pAfter;
-    }
-
-    return undefined;
-};
-
 test("Import npm packages", async (t): Promise<void> => {
     const output = await file(path.resolve(__dirname, "fixtures/test01.frag"));
 
     // Test sourcemaps
-    const lastLine = output.split("\n").pop();
+    const lastLine = output.split("\n").pop() as string;
     t.assert(
         /\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/.test(
             lastLine
@@ -63,19 +19,7 @@ test("Import npm packages", async (t): Promise<void> => {
 
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-    const hasPos = (
-        line: number,
-        column: number,
-        expLine: number,
-        expCol: number
-    ): void => {
-        const op = gOP(output, { line, column }, consumer);
-        // console.log(line, column, op.line, op.column);
-        t.deepEqual(
-            { line: op.line, column: op.column },
-            { line: expLine, column: expCol }
-        );
-    };
+    const hasPos = createPosTest(t, output, consumer);
 
     // Line 12
     hasPos(12, 0, 12, 1);

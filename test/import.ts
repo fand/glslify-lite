@@ -13,7 +13,7 @@ test("nested imports", async (t): Promise<void> => {
     const output = await gImport(input, filepath);
 
     // Test sourcemaps
-    const lastLine = output.split("\n").pop();
+    const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
     const hasPos = createPosTest(t, output, consumer);
@@ -47,7 +47,7 @@ test("nested includes and imports", async (t): Promise<void> => {
     const output = await gImport(input, filepath);
 
     // Test sourcemaps
-    const lastLine = output.split("\n").pop();
+    const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
     const hasPos = createPosTest(t, output, consumer);
@@ -80,7 +80,7 @@ test("Bundling nested includes and imports", async (t): Promise<void> => {
     const output = await file(filepath);
     console.log(output);
     // Test sourcemaps
-    const lastLine = output.split("\n").pop();
+    const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
     const hasPos = createPosTest(t, output, consumer);

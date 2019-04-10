@@ -86,8 +86,8 @@ class Glslifier {
     /**
      * Bundle deps and apply post transformations.
      */
-    private bundle(deps: DepsInfo[]): string {
-        let source = glslifyBundle(deps);
+    private async bundle(deps: DepsInfo[]): Promise<string> {
+        let source = await glslifyBundle(deps);
 
         // Load post transforms dynamically and apply them to the source
         this.posts.forEach(

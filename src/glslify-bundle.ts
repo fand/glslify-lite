@@ -8,6 +8,7 @@ import copy = require("shallow-copy");
 
 import topoSort from "./topo-sort";
 import tokensToString from "./tokens-to-string";
+import gImport from "./glslify-import";
 
 function glslifyPreprocessor(data: string): boolean {
     return /#pragma glslify:/.test(data);
@@ -53,28 +54,39 @@ function toMapping(maps?: string[]): {} | false {
 }
 
 class Bundle {
-    public src: string;
+    private deps: DepsInfo[];
     private depIndex: DepsHash;
 
     public constructor(deps: DepsInfo[]) {
         // Reorder dependencies topologically
-        deps = topoSort(deps);
-        this.depIndex = indexById(deps);
+        this.deps = topoSort(deps);
+        this.depIndex = indexById(this.deps);
+    }
 
-        for (let i = 0; i < deps.length; i++) {
-            this.preprocess(deps[i]);
+    public async bundleToString(): Promise<string> {
+        // Apply pre-transform for deps sources
+        for (let i = 0; i < this.deps.length; i++) {
+            await this.preTransform(this.deps[i]);
+        }
+
+        for (let i = 0; i < this.deps.length; i++) {
+            this.preprocess(this.deps[i]);
         }
 
         let tokens: Token[] = [];
-        for (let i = 0; i < deps.length; i++) {
-            if (deps[i].entry) {
-                tokens = tokens.concat(this.bundle(deps[i]));
+        for (let i = 0; i < this.deps.length; i++) {
+            if (this.deps[i].entry) {
+                tokens = tokens.concat(this.bundle(this.deps[i]));
             }
         }
 
         // Just use bundled source code.
         // Original glslify cleans up and trims the tokens, but we don't need it.
-        this.src = tokensToString(tokens);
+        return tokensToString(tokens);
+    }
+
+    private async preTransform(dep: DepsInfo): Promise<void> {
+        dep.source = await gImport(dep.source, dep.file);
     }
 
     private preprocess(dep: DepsInfo): void {
@@ -96,6 +108,7 @@ class Bundle {
 
             // Save original position.
             // Note: token.line and column is the end position of the token.
+            // TODO: Get original position from sourcemaps
             token.original = {
                 line: lastLine,
                 column: lastColumn
@@ -158,6 +171,7 @@ class Bundle {
     }
 
     /**
+     * DepsInfo into Token[]
      * @param entry - An array of dependency entry returned from deps
      */
     private bundle(entry: DepsInfo): Token[] {
@@ -247,13 +261,13 @@ class Bundle {
                 }
             );
 
-            // Insert edits
+            // Insert edits to tokens
+            // Sort edits by desc to avoid index mismatch
             edits.sort(
                 (a, b): number => {
                     return b[0] - a[0];
                 }
             );
-
             for (let i = 0; i < edits.length; ++i) {
                 const edit = edits[i];
                 tokens = tokens
@@ -271,9 +285,9 @@ class Bundle {
     }
 }
 
-export default function(deps: DepsInfo[]): string {
+export default async function(deps: DepsInfo[]): Promise<string> {
     // return inject(new Bundle(deps).src, {
     //     GLSLIFY: 1
     // });
-    return new Bundle(deps).src;
+    return await new Bundle(deps).bundleToString();
 }

@@ -5,7 +5,8 @@ import defines = require("glsl-token-defines");
 import scope = require("glsl-token-scope");
 import depth = require("glsl-token-depth");
 import copy = require("shallow-copy");
-
+import sourceMap from "source-map";
+import convert from "convert-source-map";
 import topoSort from "./topo-sort";
 import tokensToString from "./tokens-to-string";
 import gImport from "./glslify-import";
@@ -70,7 +71,7 @@ class Bundle {
         }
 
         for (let i = 0; i < this.deps.length; i++) {
-            this.preprocess(this.deps[i]);
+            await this.preprocess(this.deps[i]);
         }
 
         let tokens: Token[] = [];
@@ -89,10 +90,16 @@ class Bundle {
         dep.source = await gImport(dep.source, dep.file);
     }
 
-    private preprocess(dep: DepsInfo): void {
+    private async preprocess(dep: DepsInfo): Promise<void> {
         const tokens = tokenize(dep.source);
         const imports = [];
         let exports = null;
+
+        // Parse sourcemaps if exists
+        const rawMap = convert.fromSource(dep.source);
+        const consumer = rawMap
+            ? await new sourceMap.SourceMapConsumer(rawMap.toObject())
+            : null;
 
         depth(tokens);
         scope(tokens);
@@ -108,11 +115,29 @@ class Bundle {
 
             // Save original position.
             // Note: token.line and column is the end position of the token.
-            // TODO: Get original position from sourcemaps
             token.original = {
                 line: lastLine,
                 column: lastColumn
             };
+
+            // Get original position from sourcemaps
+            if (consumer) {
+                const op = consumer.originalPositionFor({
+                    line: lastLine,
+                    column: lastColumn
+                });
+                if (op.line) {
+                    token.original = {
+                        line: op.line,
+                        column: op.column || lastColumn
+                    };
+                }
+                if (op.source) {
+                    token.source = op.source;
+                }
+            }
+
+            // Update last position
             if (token.type === "whitespace") {
                 lastLine = token.line;
                 lastColumn = token.column + 1;

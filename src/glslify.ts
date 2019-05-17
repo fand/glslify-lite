@@ -57,6 +57,7 @@ class Glslifier {
         const deps = await p(depper.add.bind(depper))(
             path.resolve(opts.basedir || this.basedir, filename)
         );
+        // console.log(deps);
         return this.bundle(deps);
     }
 

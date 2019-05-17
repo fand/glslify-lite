@@ -20,12 +20,15 @@ test("Import npm packages", async (t): Promise<void> => {
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
     const hasPos = createPosTest(t, output, consumer);
+    console.log(">>");
+    console.log(output);
+    console.log(">>");
 
     // Line 12
     hasPos(12, 0, 12, 1);
     hasPos(12, 1, 12, 1);
     hasPos(12, 4, 12, 1);
-    hasPos(12, 5, 12, 5);
+    hasPos(12, 5, 12, 5); // TODO
     hasPos(12, 6, 12, 6);
     hasPos(12, 22, 12, 6);
     hasPos(12, 23, 12, 12);
@@ -70,7 +73,7 @@ test("nested imports", async (t): Promise<void> => {
     );
 
     // Test sourcemaps
-    const lastLine = output.split("\n").pop();
+    const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
     const hasPos = createPosTest(t, output, consumer);

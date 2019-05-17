@@ -98,15 +98,18 @@ class Bundle {
      * - exports: identifiers the file exports
      */
     private async preprocess(dep: DepsInfo): Promise<void> {
-        const tokens = tokenize(dep.source);
-        const imports = [];
-        let exports = null;
-
         // Parse sourcemaps if exists
         const rawMap = convert.fromSource(dep.source);
         const consumer = rawMap
             ? await new sourceMap.SourceMapConsumer(rawMap.toObject())
             : null;
+        if (consumer) {
+            dep.source = convert.removeComments(dep.source);
+        }
+
+        const tokens = tokenize(dep.source);
+        const imports = [];
+        let exports = null;
 
         depth(tokens);
         scope(tokens);
@@ -114,7 +117,10 @@ class Bundle {
         // Note: tokens must be sorted by position
         let lastLine = 1;
         let lastColumn = 1;
-
+        console.log(
+            ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+        );
+        console.log(">> has Consumer?", !!consumer);
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i];
 
@@ -134,9 +140,11 @@ class Bundle {
                     column: lastColumn
                 });
                 if (op.line) {
+                    // Pretransform only treats line number
+                    // So we have to calculate column number
                     token.original = {
                         line: op.line,
-                        column: op.column || lastColumn
+                        column: lastColumn
                     };
                 }
                 if (op.source) {

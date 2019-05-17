@@ -90,6 +90,13 @@ class Bundle {
         dep.source = await gImport(dep.source, dep.file);
     }
 
+    /**
+     * Parse DepsInfo[] and add 'parsed' field to them.
+     * 'parsed' has following fields:
+     * - tokens: Token[] of the file
+     * - imports: identifiers the file imports from other files
+     * - exports: identifiers the file exports
+     */
     private async preprocess(dep: DepsInfo): Promise<void> {
         const tokens = tokenize(dep.source);
         const imports = [];

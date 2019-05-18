@@ -98,7 +98,7 @@ class Bundle {
      * - exports: identifiers the file exports
      */
     private async preprocess(dep: DepsInfo): Promise<void> {
-        // Parse sourcemaps if exists
+        // Get sourcemaps created by pretransform
         const rawMap = convert.fromSource(dep.source);
         const consumer = rawMap
             ? await new sourceMap.SourceMapConsumer(rawMap.toObject())
@@ -117,10 +117,7 @@ class Bundle {
         // Note: tokens must be sorted by position
         let lastLine = 1;
         let lastColumn = 1;
-        console.log(
-            ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-        );
-        console.log(">> has Consumer?", !!consumer);
+
         for (let i = 0; i < tokens.length; i++) {
             const token = tokens[i];
 
@@ -139,12 +136,12 @@ class Bundle {
                     line: lastLine,
                     column: lastColumn
                 });
-                if (op.line) {
-                    // Pretransform only treats line number
-                    // So we have to calculate column number
+                if (op.line && op.column) {
+                    // preTransform saves column as offset of the position,
+                    // instead of the position itself
                     token.original = {
                         line: op.line,
-                        column: lastColumn
+                        column: lastColumn - (op.column - 1)
                     };
                 }
                 if (op.source) {

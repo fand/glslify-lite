@@ -20,9 +20,9 @@ test("Import npm packages", async (t): Promise<void> => {
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
     const hasPos = createPosTest(t, output, consumer);
-    console.log(">>");
-    console.log(output);
-    console.log(">>");
+    // console.log(">>");
+    // console.log(output);
+    // console.log(">>");
 
     // Line 12
     hasPos(12, 0, 12, 1);

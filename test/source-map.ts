@@ -1,65 +1,15 @@
 import test from "ava";
 import * as path from "path";
-import { file, compile } from "../src/glslify";
+import { file } from "../src/glslify";
 import * as convert from "convert-source-map";
 import * as sourceMap from "source-map";
+import { createPosTest } from "./_util";
 
-type MapPos = {
-    line: number;
-    column: number;
-    name: string | null;
-    source: string | null;
-};
-
-// Util: get original position
-const gOP = (
-    src: string,
-    pos: { line: number; column: number },
-    consumer: sourceMap.SourceMapConsumer
-): MapPos | undefined => {
-    // Try exact line
-    const op = consumer.originalPositionFor(pos);
-    if (op.line !== null) {
-        return op;
-    }
-
-    const lines = src.split("\n");
-    const line = lines[pos.line - 1]; // pos.line is 1-origin
-
-    // Find nearest mappings
-    let pBefore: MapPos, pAfter: MapPos;
-    for (let i = pos.column - 1; i > 0; i--) {
-        const op = consumer.originalPositionFor({ line: pos.line, column: i });
-        if (op.line !== null) {
-            pBefore = op;
-            break;
-        }
-    }
-    for (let i = pos.column + 1; i <= line.length + 1; i++) {
-        const op = consumer.originalPositionFor({ line: pos.line, column: i });
-        if (op.line !== null) {
-            pAfter = op;
-            break;
-        }
-    }
-
-    if (pBefore && pAfter) {
-        return pos.column - pBefore.column < pAfter.column - pos.column
-            ? pBefore
-            : pAfter;
-    }
-    if (pBefore || pAfter) {
-        return pBefore || pAfter;
-    }
-
-    return undefined;
-};
-
-test("Import npm packages", async t => {
+test("Import npm packages", async (t): Promise<void> => {
     const output = await file(path.resolve(__dirname, "fixtures/test01.frag"));
 
     // Test sourcemaps
-    const lastLine = output.split("\n").pop();
+    const lastLine = output.split("\n").pop() as string;
     t.assert(
         /\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/.test(
             lastLine
@@ -69,25 +19,16 @@ test("Import npm packages", async t => {
 
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-    const hasPos = (
-        line: number,
-        column: number,
-        expLine: number,
-        expCol: number
-    ) => {
-        const op = gOP(output, { line, column }, consumer);
-        // console.log(line, column, op.line, op.column);
-        t.deepEqual(
-            { line: op.line, column: op.column },
-            { line: expLine, column: expCol }
-        );
-    };
+    const hasPos = createPosTest(t, output, consumer);
+    // console.log(">>");
+    // console.log(output);
+    // console.log(">>");
 
     // Line 12
     hasPos(12, 0, 12, 1);
     hasPos(12, 1, 12, 1);
     hasPos(12, 4, 12, 1);
-    hasPos(12, 5, 12, 5);
+    hasPos(12, 5, 12, 5); // TODO
     hasPos(12, 6, 12, 6);
     hasPos(12, 22, 12, 6);
     hasPos(12, 23, 12, 12);
@@ -126,30 +67,16 @@ test("Import npm packages", async t => {
     consumer.destroy();
 });
 
-test("nested imports", async t => {
+test("nested imports", async (t): Promise<void> => {
     const output = await file(
         path.resolve(__dirname, "fixtures/nest-conflict-entry.glsl")
     );
 
     // Test sourcemaps
-    const lastLine = output.split("\n").pop();
+    const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-
-    const hasPos = (
-        line: number,
-        column: number,
-        expLine: number,
-        expCol: number,
-        source: string
-    ) => {
-        const op = gOP(output, { line, column }, consumer);
-        t.deepEqual(
-            { line: op.line, column: op.column },
-            { line: expLine, column: expCol }
-        );
-        t.regex(op.source, new RegExp(source));
-    };
+    const hasPos = createPosTest(t, output, consumer);
 
     hasPos(1, 1, 1, 1, "nest-conflict-entry");
     hasPos(3, 1, 3, 1, "nest-conflict-entry");

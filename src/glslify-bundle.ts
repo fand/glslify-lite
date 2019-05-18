@@ -1,5 +1,3 @@
-/* eslint-disable no-redeclare */
-
 import hash from "murmurhash-js/murmurhash3_gc";
 import tokenize = require("glsl-tokenizer/string");
 import descope = require("glsl-token-descope");
@@ -7,9 +5,11 @@ import defines = require("glsl-token-defines");
 import scope = require("glsl-token-scope");
 import depth = require("glsl-token-depth");
 import copy = require("shallow-copy");
-
+import sourceMap from "source-map";
+import convert from "convert-source-map";
 import topoSort from "./topo-sort";
-import string from "./tokens-to-string";
+import tokensToString from "./tokens-to-string";
+import gImport from "./glslify-import";
 
 function glslifyPreprocessor(data: string): boolean {
     return /#pragma glslify:/.test(data);
@@ -19,7 +19,7 @@ function glslifyExport(data: string): RegExpExecArray | null {
     return /#pragma glslify:\s*export\(([^)]+)\)/.exec(data);
 }
 
-function glslifyImport(data: string): RegExpExecArray | null {
+function glslifyRequire(data: string): RegExpExecArray | null {
     return /#pragma glslify:\s*([^=\s]+)\s*=\s*require\(([^)]+)\)/.exec(data);
 }
 
@@ -55,31 +55,58 @@ function toMapping(maps?: string[]): {} | false {
 }
 
 class Bundle {
-    public src: string;
+    private deps: DepsInfo[];
     private depIndex: DepsHash;
 
     public constructor(deps: DepsInfo[]) {
         // Reorder dependencies topologically
-        deps = topoSort(deps);
-        this.depIndex = indexById(deps);
+        this.deps = topoSort(deps);
+        this.depIndex = indexById(this.deps);
+    }
 
-        for (let i = 0; i < deps.length; i++) {
-            this.preprocess(deps[i]);
+    public async bundleToString(): Promise<string> {
+        // Apply pre-transform for deps sources
+        for (let i = 0; i < this.deps.length; i++) {
+            await this.preTransform(this.deps[i]);
+        }
+
+        for (let i = 0; i < this.deps.length; i++) {
+            await this.preprocess(this.deps[i]);
         }
 
         let tokens: Token[] = [];
-        for (let i = 0; i < deps.length; i++) {
-            if (deps[i].entry) {
-                tokens = tokens.concat(this.bundle(deps[i]));
+        for (let i = 0; i < this.deps.length; i++) {
+            if (this.deps[i].entry) {
+                tokens = tokens.concat(this.bundle(this.deps[i]));
             }
         }
 
         // Just use bundled source code.
         // Original glslify cleans up and trims the tokens, but we don't need it.
-        this.src = string(tokens);
+        return tokensToString(tokens);
     }
 
-    private preprocess(dep: DepsInfo): void {
+    private async preTransform(dep: DepsInfo): Promise<void> {
+        dep.source = await gImport(dep.source, dep.file);
+    }
+
+    /**
+     * Parse DepsInfo[] and add 'parsed' field to them.
+     * 'parsed' has following fields:
+     * - tokens: Token[] of the file
+     * - imports: identifiers the file imports from other files
+     * - exports: identifiers the file exports
+     */
+    private async preprocess(dep: DepsInfo): Promise<void> {
+        // Get sourcemaps created by pretransform
+        const rawMap = convert.fromSource(dep.source);
+        const consumer = rawMap
+            ? await new sourceMap.SourceMapConsumer(rawMap.toObject())
+            : null;
+        if (consumer) {
+            dep.source = convert.removeComments(dep.source);
+        }
+
         const tokens = tokenize(dep.source);
         const imports = [];
         let exports = null;
@@ -102,6 +129,27 @@ class Bundle {
                 line: lastLine,
                 column: lastColumn
             };
+
+            // Get original position from sourcemaps
+            if (consumer) {
+                const op = consumer.originalPositionFor({
+                    line: lastLine,
+                    column: lastColumn
+                });
+                if (op.line && op.column) {
+                    // preTransform saves column as offset of the position,
+                    // instead of the position itself
+                    token.original = {
+                        line: op.line,
+                        column: lastColumn - (op.column - 1)
+                    };
+                }
+                if (op.source) {
+                    token.source = op.source;
+                }
+            }
+
+            // Update last position
             if (token.type === "whitespace") {
                 lastLine = token.line;
                 lastColumn = token.column + 1;
@@ -114,11 +162,11 @@ class Bundle {
             if (!glslifyPreprocessor(token.data)) continue;
 
             const exported = glslifyExport(token.data);
-            const imported = glslifyImport(token.data);
+            const imported = glslifyRequire(token.data);
 
             if (exported) {
                 exports = exported[1];
-                tokens.splice(i--, 1);
+                tokens.splice(i--, 1); // Delete this token
             } else if (imported) {
                 const name = imported[1];
                 const maps = imported[2].split(/\s?,\s?/g);
@@ -135,7 +183,7 @@ class Bundle {
                     maps: toMapping(maps),
                     index: i
                 });
-                tokens.splice(i--, 1);
+                tokens.splice(i--, 1); // Delete this token
             }
         }
 
@@ -160,6 +208,7 @@ class Bundle {
     }
 
     /**
+     * DepsInfo into Token[]
      * @param entry - An array of dependency entry returned from deps
      */
     private bundle(entry: DepsInfo): Token[] {
@@ -249,13 +298,13 @@ class Bundle {
                 }
             );
 
-            // Insert edits
+            // Insert edits to tokens
+            // Sort edits by desc to avoid index mismatch
             edits.sort(
                 (a, b): number => {
                     return b[0] - a[0];
                 }
             );
-
             for (let i = 0; i < edits.length; ++i) {
                 const edit = edits[i];
                 tokens = tokens
@@ -273,9 +322,9 @@ class Bundle {
     }
 }
 
-export default function(deps: DepsInfo[]): string {
+export default async function(deps: DepsInfo[]): Promise<string> {
     // return inject(new Bundle(deps).src, {
     //     GLSLIFY: 1
     // });
-    return new Bundle(deps).src;
+    return await new Bundle(deps).bundleToString();
 }

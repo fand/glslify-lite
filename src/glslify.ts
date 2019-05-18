@@ -57,6 +57,7 @@ class Glslifier {
         const deps = await p(depper.add.bind(depper))(
             path.resolve(opts.basedir || this.basedir, filename)
         );
+        // console.log(deps);
         return this.bundle(deps);
     }
 
@@ -86,8 +87,8 @@ class Glslifier {
     /**
      * Bundle deps and apply post transformations.
      */
-    private bundle(deps: DepsInfo[]): string {
-        let source = glslifyBundle(deps);
+    private async bundle(deps: DepsInfo[]): Promise<string> {
+        let source = await glslifyBundle(deps);
 
         // Load post transforms dynamically and apply them to the source
         this.posts.forEach(

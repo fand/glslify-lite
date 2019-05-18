@@ -38,7 +38,7 @@ type Depper = {
     add(filename: string, callback: DepperCallback): void;
     inline(source: string, basedir: string, callback: DepperCallback): void;
     transform(transform: string, options: DepperTransformOptions): void;
-    on(event: 'file', callback: (filename: string) => void): void;
+    on(event: "file", callback: (filename: string) => void): void;
 };
 
 type PostTransform = {
@@ -47,7 +47,18 @@ type PostTransform = {
 };
 
 type Token = {
-    type: "block-comment" | "line-comment" | "preprocessor" | "operator"| "float" | "ident" | "builtin" | "eof" | "integer" |"whitespace" | "keyword";
+    type:
+        | "block-comment"
+        | "line-comment"
+        | "preprocessor"
+        | "operator"
+        | "float"
+        | "ident"
+        | "builtin"
+        | "eof"
+        | "integer"
+        | "whitespace"
+        | "keyword";
     data: string;
     position: number;
     line: number;
@@ -57,6 +68,12 @@ type Token = {
     original?: {
         line: number;
         column: number;
-    }
+    };
 };
 
+interface MapPos {
+    line: number;
+    column: number;
+    name: string | null;
+    source: string | null;
+}

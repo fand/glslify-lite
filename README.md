@@ -1,5 +1,7 @@
 # glslify-lite
 
+[![](https://img.shields.io/travis/fand/glslify-lite.svg)](https://travis-ci.org/fand/glslify-lite) [![](https://img.shields.io/codecov/c/github/fand/glslify-lite.svg)](https://codecov.io/gh/fand/glslify-lite) ![](https://img.shields.io/npm/l/glslify-lite.svg)
+
 A fast, lightweight fork of [glslify](https://github.com/glslify/glslify).
 Intended to provide more useful APIs for linters, live coding apps, etc.
 

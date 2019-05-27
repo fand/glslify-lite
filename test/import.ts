@@ -18,25 +18,25 @@ test("nested imports", async (t): Promise<void> => {
     const consumer = await new sourceMap.SourceMapConsumer(sm);
     const hasPos = createPosTest(t, output, consumer);
 
-    // hasPos(1, 1, 1, 1, "import-entry");
+    hasPos(1, 1, 1, 1, "import-entry");
     hasPos(2, 1, 2, 1, "import-entry");
 
-    // hasPos(3, 1, 1, 1, "import-1");
-    // hasPos(4, 1, 2, 1, "import-1"); // line for EOF
-    //
-    // hasPos(5, 1, 4, 1, "import-entry");
-    //
-    // hasPos(6, 1, 1, 1, "import-2");
-    //
-    // hasPos(7, 1, 1, 1, "import-3");
-    // hasPos(8, 1, 2, 1, "import-3");
-    // hasPos(9, 1, 3, 1, "import-3");
-    // hasPos(10, 1, 4, 1, "import-3"); // line for EOF
-    //
-    // hasPos(11, 1, 3, 1, "import-2");
-    // hasPos(12, 1, 4, 1, "import-2"); // line for EOF
-    //
-    // hasPos(14, 1, 7, 1, "import-entry");
+    hasPos(3, 1, 1, 1, "import-1");
+    hasPos(4, 1, 2, 1, "import-1"); // line for EOF
+
+    hasPos(5, 1, 4, 1, "import-entry");
+
+    hasPos(6, 1, 1, 1, "import-2");
+
+    hasPos(7, 1, 1, 1, "import-3");
+    hasPos(8, 1, 2, 1, "import-3");
+    hasPos(9, 1, 3, 1, "import-3");
+    hasPos(10, 1, 4, 1, "import-3"); // line for EOF
+
+    hasPos(11, 1, 3, 1, "import-2");
+    hasPos(12, 1, 4, 1, "import-2"); // line for EOF
+
+    hasPos(14, 1, 7, 1, "import-entry");
 
     consumer.destroy();
 });

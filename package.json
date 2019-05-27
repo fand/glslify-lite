@@ -1,6 +1,6 @@
 {
     "name": "glslify-lite",
-    "version": "0.0.0",
+    "version": "0.0.1",
     "description": "A fast, lightweight fork of glslify",
     "main": "lib/index.js",
     "scripts": {

@@ -20,13 +20,16 @@
             "git add"
         ]
     },
-    "ava": {
-        "compileEnhancements": false,
-        "extensions": [
-            "ts"
-        ],
-        "require": [
-            "ts-node/register/transpile-only"
+    "jest": {
+        "transform": {
+            "^.+\\.ts$": "ts-jest"
+        },
+        "testRegex": "(/__tests__/.*|(\\.|/)test)\\.(js|ts)$",
+        "moduleFileExtensions": [
+            "ts",
+            "js",
+            "json",
+            "node"
         ]
     },
     "keywords": [],
@@ -34,6 +37,7 @@
     "license": "MIT",
     "devDependencies": {
         "@types/convert-source-map": "^1.5.1",
+        "@types/jest": "^24.0.13",
         "@types/murmurhash-js": "^1.0.3",
         "@types/node": "^11.13.0",
         "@types/pify": "^3.0.2",
@@ -41,15 +45,15 @@
         "@types/source-map": "^0.5.7",
         "@types/stack-trace": "0.0.29",
         "@typescript-eslint/eslint-plugin": "^1.6.0",
-        "ava": "^1.4.1",
         "eslint": "^5.16.0",
         "eslint-config-prettier": "^4.1.0",
         "eslint-plugin-prettier": "^3.0.1",
         "glsl-noise": "0.0.0",
         "husky": "^1.3.1",
+        "jest": "^24.8.0",
         "lint-staged": "^8.1.5",
         "prettier": "^1.16.4",
-        "ts-node": "^8.0.3",
+        "ts-jest": "^24.0.2",
         "typescript": "^3.4.1"
     },
     "dependencies": {

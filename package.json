@@ -7,7 +7,7 @@
         "build": "tsc -d",
         "lint": "eslint src/**/*.ts",
         "test": "jest --coverage",
-        "ci": "run-p lint test build"
+        "ci": "run-p lint build test && codecov"
     },
     "husky": {
         "hooks": {
@@ -30,6 +30,10 @@
             "js",
             "json",
             "node"
+        ],
+        "coveragePathIgnorePatterns": [
+            "<rootDir>/test/",
+            "<rootDir>/node_modules/"
         ]
     },
     "keywords": [],
@@ -45,6 +49,7 @@
         "@types/source-map": "^0.5.7",
         "@types/stack-trace": "0.0.29",
         "@typescript-eslint/eslint-plugin": "^1.6.0",
+        "codecov": "^3.5.0",
         "eslint": "^5.16.0",
         "eslint-config-prettier": "^4.1.0",
         "eslint-plugin-jest": "^22.6.4",

@@ -1,4 +1,3 @@
-import test from "ava";
 import * as path from "path";
 import * as fs from "fs";
 import gImport from "../src/glslify-import";
@@ -7,7 +6,7 @@ import * as convert from "convert-source-map";
 import * as sourceMap from "source-map";
 import { createPosTest } from "./_util";
 
-test("nested imports", async (t): Promise<void> => {
+test("nested imports", async (): Promise<void> => {
     const filepath = path.resolve(__dirname, "fixtures/import-entry.glsl");
     const input = fs.readFileSync(filepath, "utf8");
     const output = await gImport(input, filepath);
@@ -16,7 +15,7 @@ test("nested imports", async (t): Promise<void> => {
     const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-    const hasPos = createPosTest(t, output, consumer);
+    const hasPos = createPosTest(expect, output, consumer);
 
     hasPos(1, 1, 1, 1, "import-entry");
     hasPos(2, 1, 2, 1, "import-entry");
@@ -41,7 +40,7 @@ test("nested imports", async (t): Promise<void> => {
     consumer.destroy();
 });
 
-test("nested includes and imports", async (t): Promise<void> => {
+test("nested includes and imports", async (): Promise<void> => {
     const filepath = path.resolve(__dirname, "fixtures/include-entry.glsl");
     const input = fs.readFileSync(filepath, "utf8");
     const output = await gImport(input, filepath);
@@ -50,7 +49,7 @@ test("nested includes and imports", async (t): Promise<void> => {
     const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-    const hasPos = createPosTest(t, output, consumer);
+    const hasPos = createPosTest(expect, output, consumer);
 
     hasPos(1, 1, 1, 1, "include-entry");
     hasPos(2, 1, 2, 1, "include-entry");
@@ -75,7 +74,7 @@ test("nested includes and imports", async (t): Promise<void> => {
     consumer.destroy();
 });
 
-test("Bundling nested includes and imports", async (t): Promise<void> => {
+test("Bundling nested includes and imports", async (): Promise<void> => {
     const filepath = path.resolve(__dirname, "fixtures/include-entry.glsl");
     const output = await file(filepath);
 
@@ -83,7 +82,7 @@ test("Bundling nested includes and imports", async (t): Promise<void> => {
     const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-    const hasPos = createPosTest(t, output, consumer);
+    const hasPos = createPosTest(expect, output, consumer);
 
     hasPos(1, 1, 1, 1, "include-entry");
     hasPos(2, 1, 2, 1, "include-entry");

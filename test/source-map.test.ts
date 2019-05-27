@@ -1,28 +1,21 @@
-import test from "ava";
 import * as path from "path";
 import { file } from "../src/glslify";
 import * as convert from "convert-source-map";
 import * as sourceMap from "source-map";
 import { createPosTest } from "./_util";
 
-test("Import npm packages", async (t): Promise<void> => {
+test("Import npm packages", async (): Promise<void> => {
     const output = await file(path.resolve(__dirname, "fixtures/test01.frag"));
 
     // Test sourcemaps
     const lastLine = output.split("\n").pop() as string;
-    t.assert(
-        /\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/.test(
-            lastLine
-        ),
-        "contains sourceMaps of the file"
-    );
+    expect(lastLine).toMatch(
+        /\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/
+    ); // contains sourceMaps of the file
 
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-    const hasPos = createPosTest(t, output, consumer);
-    // console.log(">>");
-    // console.log(output);
-    // console.log(">>");
+    const hasPos = createPosTest(expect, output, consumer);
 
     // Line 12
     hasPos(12, 0, 12, 1);
@@ -67,7 +60,7 @@ test("Import npm packages", async (t): Promise<void> => {
     consumer.destroy();
 });
 
-test("nested imports", async (t): Promise<void> => {
+test("nested imports", async (): Promise<void> => {
     const output = await file(
         path.resolve(__dirname, "fixtures/nest-conflict-entry.glsl")
     );
@@ -76,7 +69,7 @@ test("nested imports", async (t): Promise<void> => {
     const lastLine = output.split("\n").pop() as string;
     const sm = convert.fromComment(lastLine).toObject();
     const consumer = await new sourceMap.SourceMapConsumer(sm);
-    const hasPos = createPosTest(t, output, consumer);
+    const hasPos = createPosTest(expect, output, consumer);
 
     hasPos(1, 1, 1, 1, "nest-conflict-entry");
     hasPos(3, 1, 3, 1, "nest-conflict-entry");

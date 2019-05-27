@@ -46,7 +46,7 @@ export const getOriginalPos = (
 };
 
 export const createPosTest = (
-    t: any,
+    expect: jest.Expect,
     output: string,
     consumer: sourceMap.SourceMapConsumer
 ): any => (
@@ -58,12 +58,19 @@ export const createPosTest = (
 ): void => {
     const op = getOriginalPos(output, { line, column }, consumer);
     if (op) {
-        t.deepEqual(
-            { line: op.line, column: op.column },
-            { line: expLine, column: expCol }
-        );
+        // t.deepEqual(
+        //     { line: op.line, column: op.column },
+        //     { line: expLine, column: expCol }
+        // );
+        // if (source) {
+        //     t.regex(op.source, new RegExp(source));
+        // }
+        expect({
+            line: op.line,
+            column: op.column
+        }).toEqual({ line: expLine, column: expCol });
         if (source) {
-            t.regex(op.source, new RegExp(source));
+            expect(op.source).toMatch(new RegExp(source));
         }
     }
 };

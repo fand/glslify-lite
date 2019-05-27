@@ -1,4 +1,3 @@
-import * as convert from "convert-source-map";
 import * as sourceMap from "source-map";
 
 // Util: get original position

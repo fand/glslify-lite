@@ -69,17 +69,15 @@ class Glslifier {
         const depper = glslifyDeps({ cwd: opts.basedir || this.basedir });
 
         const transforms = opts.transform || [];
-        transforms.forEach(
-            (transform: Transform): void => {
-                const name = transform[0];
-                const opts = transform[1] || {};
-                if (opts.post) {
-                    this.posts.push({ name: name, opts: opts });
-                } else {
-                    depper.transform(name, opts);
-                }
+        transforms.forEach((transform: Transform): void => {
+            const name = transform[0];
+            const opts = transform[1] || {};
+            if (opts.post) {
+                this.posts.push({ name: name, opts: opts });
+            } else {
+                depper.transform(name, opts);
             }
-        );
+        });
 
         return depper;
     }
@@ -91,18 +89,16 @@ class Glslifier {
         let source = await glslifyBundle(deps);
 
         // Load post transforms dynamically and apply them to the source
-        this.posts.forEach(
-            (tr): void => {
-                const target = nodeResolve.sync(tr.name, {
-                    basedir: this.basedir
-                });
-                const transform = require(target); // eslint-disable-line
-                const src = transform(null, source, { post: true });
-                if (src) {
-                    source = src;
-                }
+        this.posts.forEach((tr): void => {
+            const target = nodeResolve.sync(tr.name, {
+                basedir: this.basedir
+            });
+            const transform = require(target); // eslint-disable-line
+            const src = transform(null, source, { post: true });
+            if (src) {
+                source = src;
             }
-        );
+        });
 
         return source;
     }

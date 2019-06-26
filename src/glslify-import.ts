@@ -45,22 +45,20 @@ export default async (src: string, filepath: string): Promise<string> => {
     await dig(src, filepath);
 
     let output = "";
-    lines.forEach(
-        (l, i: number): void => {
-            output += l.content + "\n";
-            map.addMapping({
-                source: l.source,
-                original: {
-                    line: l.line,
-                    column: 1
-                },
-                generated: {
-                    line: i + 1,
-                    column: 1
-                }
-            });
-        }
-    );
+    lines.forEach((l, i: number): void => {
+        output += l.content + "\n";
+        map.addMapping({
+            source: l.source,
+            original: {
+                line: l.line,
+                column: 1
+            },
+            generated: {
+                line: i + 1,
+                column: 1
+            }
+        });
+    });
 
     const mapJSON = map.toString();
     const mapComment = convert.fromJSON(mapJSON).toComment();

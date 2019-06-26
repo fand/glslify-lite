@@ -44,11 +44,9 @@ function toMapping(maps?: string[]): {} | false {
 
         const expr = defns.pop();
 
-        defns.forEach(
-            (key): void => {
-                mapping[key] = expr;
-            }
-        );
+        defns.forEach((key): void => {
+            mapping[key] = expr;
+        });
 
         return mapping;
     }, {});
@@ -87,7 +85,7 @@ class Bundle {
     }
 
     private async preTransform(dep: DepsInfo): Promise<void> {
-        dep.source = await gImport(dep.source, dep.file);
+        dep.source = await gImport(dep.source, dep.file); // eslint-disable-line
     }
 
     /**
@@ -104,7 +102,7 @@ class Bundle {
             ? await new sourceMap.SourceMapConsumer(rawMap.toObject())
             : null;
         if (consumer) {
-            dep.source = convert.removeComments(dep.source);
+            dep.source = convert.removeComments(dep.source); // eslint-disable-line
         }
 
         const tokens = tokenize(dep.source);
@@ -200,6 +198,7 @@ class Bundle {
             throw new Error(dep.file + " does not export any symbols");
         }
 
+        // eslint-disable-next-line
         dep.parsed = {
             tokens: tokens,
             imports: imports,
@@ -288,23 +287,18 @@ class Bundle {
             // Rename tokens
             const parsedTokens = parsed.tokens.map(copy);
             const parsedDefs = defines(parsedTokens);
-            let tokens = descope(
-                parsedTokens,
-                (local: number): string => {
-                    if (parsedDefs[local]) return local + "";
-                    if (rename[local]) return rename[local] + "";
+            let tokens = descope(parsedTokens, (local: number): string => {
+                if (parsedDefs[local]) return local + "";
+                if (rename[local]) return rename[local] + "";
 
-                    return local + suffix;
-                }
-            );
+                return local + suffix;
+            });
 
             // Insert edits to tokens
             // Sort edits by desc to avoid index mismatch
-            edits.sort(
-                (a, b): number => {
-                    return b[0] - a[0];
-                }
-            );
+            edits.sort((a, b): number => {
+                return b[0] - a[0];
+            });
             for (let i = 0; i < edits.length; ++i) {
                 const edit = edits[i];
                 tokens = tokens

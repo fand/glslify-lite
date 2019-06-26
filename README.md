@@ -45,7 +45,6 @@ Compile a shader string from a string `src`.
 Optionally provide:
 
 -   `opts.basedir` - directory to resolve relative paths in `src`
--   `opts.transform` - an array of transform functions, transform module name strings, or `[trname,tropts]` pairs
 
 #### glslify.file(filename, opts): Promise<string>
 
@@ -54,7 +53,6 @@ Compile a shader from a `filename`.
 Optionally provide:
 
 -   `opts.basedir` - directory to resolve relative paths in `src`
--   `opts.transform` - an array of transform functions, transform module name strings, or `[trname,tropts]` pairs
 
 ## LICENSE
 

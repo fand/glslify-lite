@@ -34,7 +34,17 @@ npm i glslify-lite
 
 ### CLI
 
-TBD
+The CLI can take a file as its first argument, and output to a file using the -o flag:
+
+```
+glslify-lite index.glsl -o output.glsl
+```
+
+It can also read input from stdin and output to stdout:
+
+```
+cat index.glsl | glslify-lite > output.glsl
+```
 
 ### API
 

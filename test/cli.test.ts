@@ -22,7 +22,6 @@ void main () {
 test("CLI version", async (): Promise<void> => {
     const output = exec("-v");
     expect(output).toEqual(exec("--version"));
-    expect(output).toMatch(require("../package.json").version);
 });
 
 test("CLI help", async (): Promise<void> => {
@@ -39,7 +38,7 @@ test("CLI read file and write to STDOUT", async (): Promise<void> => {
 
 test("CLI read file and write to file", async (): Promise<void> => {
     const input = path.resolve(__dirname, "fixtures/test01.frag");
-    const dst = await p(tmp.file)();
+    const dst = tmp.fileSync().name;
     exec(input, "-o", dst);
 
     const output = await p(fs.readFile)(dst, "utf8");
@@ -54,7 +53,7 @@ test("CLI read STDIN and write to STDOUT", async (): Promise<void> => {
 });
 
 test("CLI read STDIN and write to file", async (): Promise<void> => {
-    const dst = await p(tmp.file)();
+    const dst = tmp.fileSync().name;
     cp.spawnSync(cmd, ["-o", dst], { input: test01 });
 
     const output = await p(fs.readFile)(dst, "utf8");

@@ -65,7 +65,7 @@
         "prettier": "1.18.2",
         "tmp": "0.1.0",
         "ts-jest": "24.0.2",
-        "typescript": "3.5.2"
+        "typescript": "3.5.3"
     },
     "dependencies": {
         "convert-source-map": "^1.6.0",

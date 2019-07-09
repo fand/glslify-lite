@@ -46,7 +46,7 @@
         "@types/convert-source-map": "1.5.1",
         "@types/jest": "24.0.15",
         "@types/murmurhash-js": "1.0.3",
-        "@types/node": "12.6.1",
+        "@types/node": "12.6.2",
         "@types/pify": "3.0.2",
         "@types/source-map": "0.5.7",
         "@types/stack-trace": "0.0.29",

@@ -1,2 +1,2 @@
 import * as glslify from "./glslify";
-module.exports = glslify;
+export = glslify;

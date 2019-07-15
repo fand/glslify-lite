@@ -6,7 +6,7 @@ import * as convert from "convert-source-map";
 import p from "pify";
 
 function getImportPath(data: string): string | void {
-    const m = /#pragma glslify:\s*import\(([^)]+)\)/.exec(data);
+    const m = /#pragma glslify:\s*import\(['"]?([^)]+?)['"]?\)/.exec(data);
     if (m && m[1]) return m[1];
 }
 

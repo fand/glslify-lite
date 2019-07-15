@@ -1,7 +1,7 @@
 {
     "name": "glslify-lite",
     "description": "A fast, lightweight fork of glslify",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "author": "fand <fand.gmork@gmail.com> (https://gmork.in/)",
     "bin": {
         "glslify-lite": "./bin/cli.js"

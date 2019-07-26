@@ -41,7 +41,7 @@
         "codecov": "3.5.0",
         "eslint": "6.1.0",
         "eslint-config-prettier": "6.0.0",
-        "eslint-plugin-jest": "22.13.7",
+        "eslint-plugin-jest": "22.14.0",
         "eslint-plugin-prettier": "3.1.0",
         "glsl-noise": "0.0.0",
         "husky": "2.7.0",

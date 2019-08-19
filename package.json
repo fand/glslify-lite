@@ -29,7 +29,7 @@
     },
     "devDependencies": {
         "@types/convert-source-map": "1.5.1",
-        "@types/jest": "24.0.17",
+        "@types/jest": "24.0.18",
         "@types/murmurhash-js": "1.0.3",
         "@types/node": "12.7.2",
         "@types/pify": "3.0.2",
@@ -40,7 +40,7 @@
         "@typescript-eslint/parser": "1.13.0",
         "codecov": "3.5.0",
         "eslint": "6.2.0",
-        "eslint-config-prettier": "6.0.0",
+        "eslint-config-prettier": "6.1.0",
         "eslint-plugin-jest": "22.15.1",
         "eslint-plugin-prettier": "3.1.0",
         "glsl-noise": "0.0.0",

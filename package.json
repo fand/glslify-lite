@@ -38,7 +38,7 @@
         "@types/tmp": "0.1.0",
         "@typescript-eslint/eslint-plugin": "1.13.0",
         "@typescript-eslint/parser": "1.13.0",
-        "codecov": "3.6.0",
+        "codecov": "3.6.1",
         "eslint": "6.4.0",
         "eslint-config-prettier": "6.3.0",
         "eslint-plugin-jest": "22.17.0",

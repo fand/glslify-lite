@@ -29,9 +29,9 @@
     },
     "devDependencies": {
         "@types/convert-source-map": "1.5.1",
-        "@types/jest": "24.0.21",
+        "@types/jest": "24.0.22",
         "@types/murmurhash-js": "1.0.3",
-        "@types/node": "12.12.5",
+        "@types/node": "12.12.6",
         "@types/pify": "3.0.2",
         "@types/source-map": "0.5.7",
         "@types/stack-trace": "0.0.29",
@@ -50,7 +50,7 @@
         "prettier": "1.18.2",
         "tmp": "0.1.0",
         "ts-jest": "24.1.0",
-        "typescript": "3.6.4"
+        "typescript": "3.7.2"
     },
     "files": [
         "README.md",

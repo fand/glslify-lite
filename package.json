@@ -31,7 +31,7 @@
         "@types/convert-source-map": "1.5.1",
         "@types/jest": "24.0.25",
         "@types/murmurhash-js": "1.0.3",
-        "@types/node": "12.12.23",
+        "@types/node": "12.12.24",
         "@types/pify": "3.0.2",
         "@types/source-map": "0.5.7",
         "@types/stack-trace": "0.0.29",
@@ -49,7 +49,7 @@
         "lint-staged": "8.2.1",
         "prettier": "1.19.1",
         "tmp": "0.1.0",
-        "ts-jest": "24.2.0",
+        "ts-jest": "24.3.0",
         "typescript": "3.7.4"
     },
     "files": [

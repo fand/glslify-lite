@@ -46,7 +46,7 @@
         "glsl-noise": "0.0.0",
         "husky": "2.7.0",
         "jest": "24.9.0",
-        "lint-staged": "8.2.1",
+        "lint-staged": "10.0.8",
         "prettier": "1.19.1",
         "tmp": "0.1.0",
         "ts-jest": "24.3.0",

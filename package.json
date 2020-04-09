@@ -29,7 +29,7 @@
     },
     "devDependencies": {
         "@types/convert-source-map": "1.5.1",
-        "@types/jest": "24.9.0",
+        "@types/jest": "25.2.1",
         "@types/murmurhash-js": "1.0.3",
         "@types/node": "12.12.25",
         "@types/pify": "3.0.2",

@@ -44,7 +44,7 @@
         "eslint-plugin-jest": "22.21.0",
         "eslint-plugin-prettier": "3.1.2",
         "glsl-noise": "0.0.0",
-        "husky": "2.7.0",
+        "husky": "4.2.3",
         "jest": "24.9.0",
         "lint-staged": "8.2.1",
         "prettier": "1.19.1",

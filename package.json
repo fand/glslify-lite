@@ -9,7 +9,7 @@
     "bugs": "https://github.com/fand/glslify-lite/issues",
     "dependencies": {
         "convert-source-map": "^1.6.0",
-        "get-stdin": "^7.0.0",
+        "get-stdin": "^8.0.0",
         "glsl-inject-defines": "^1.0.3",
         "glsl-token-defines": "^1.0.0",
         "glsl-token-depth": "^1.1.2",
